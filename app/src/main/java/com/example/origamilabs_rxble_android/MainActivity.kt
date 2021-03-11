@@ -13,6 +13,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
+    private var message = ""
+
     private val rxPermissions: RxPermissions by lazy {
         RxPermissions(this)
     }
@@ -128,7 +130,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         connect_button.setOnClickListener {
-            bleHelper.enabledConnectBle(!bleHelper.isConnectBleEnabled,bleHelper.getBluetoothDevice(mac_address_edit_text.text.toString()))
+            bleHelper.enabledConnectBle(
+                !bleHelper.isConnectBleEnabled,
+                bleHelper.getBluetoothDevice(mac_address_edit_text.text.toString())
+            )
             changeEnabledButtonText(bleHelper.isConnectBleEnabled, connect_button)
         }
 
@@ -146,13 +151,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         bonded_button.setOnClickListener {
-            val bluetoothDevice = bleHelper.getBleDevice(mac_address_edit_text.text.toString())?.bluetoothDevice
+            val bluetoothDevice =
+                bleHelper.getBleDevice(mac_address_edit_text.text.toString())?.bluetoothDevice
             if (bluetoothDevice != null)
                 bluetoothHelper.bondDevice(bluetoothDevice)
         }
 
         connect_a2dp_button.setOnClickListener {
-            val bluetoothDevice = bleHelper.getBleDevice(mac_address_edit_text.text.toString())?.bluetoothDevice
+            val bluetoothDevice =
+                bleHelper.getBleDevice(mac_address_edit_text.text.toString())?.bluetoothDevice
             if (bluetoothDevice != null)
                 bluetoothHelper.connectA2dp(bluetoothDevice)
         }
@@ -166,11 +173,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         auto_connect_button.setOnClickListener {
-            bluetoothManager.connectDevice(mac_address_edit_text.text.toString(),true)
+            bluetoothManager.connectDevice(mac_address_edit_text.text.toString(), true)
         }
 
         refresh_button.setOnClickListener {
-            bleHelper.enabledConnectBle(!bleHelper.isConnectBleEnabled, bleHelper.getBluetoothDevice(mac_address_edit_text.text.toString()))
+            bleHelper.enabledConnectBle(
+                !bleHelper.isConnectBleEnabled,
+                bleHelper.getBluetoothDevice(mac_address_edit_text.text.toString())
+            )
         }
 
         scroll_2_view.viewTreeObserver.addOnGlobalLayoutListener {
@@ -180,7 +190,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         clear_button.setOnClickListener {
-            message_text_view.text=""
+            this.message = ""
+            message_text_view.text = ""
         }
     }
 
@@ -208,7 +219,8 @@ class MainActivity : AppCompatActivity() {
         val df = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
         val currentDateAndTime: String = df.format(Date())
 
-        message_text_view.text = "${message_text_view.text}\n$currentDateAndTime:${message}"
+        this.message = "${this.message}\n$currentDateAndTime:${message}"
+        message_text_view.text = this.message
     }
 
     private fun changeEnabledButtonText(isEnabled: Boolean, button: Button) {
