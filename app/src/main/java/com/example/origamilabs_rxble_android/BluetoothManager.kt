@@ -92,13 +92,13 @@ class BluetoothManager(private val context: Context) {
             error.apply {
                 when {
                     this.contains("status 133") -> {
-//                        bleHelper.startConnectBleTimer()
+                        bleHelper.startConnectBleTimer()
                     }
                     this.contains("status 8") ->{
-//                        bleHelper.startConnectBleTimer()
+                        bleHelper.startConnectBleTimer()
                     }
                     this.contains("status 40") ->{
-//                        bleHelper.startConnectBleTimer()
+                        bleHelper.startConnectBleTimer()
                     }
                 }
             }

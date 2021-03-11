@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit
 class BleHelper(context: Context) {
     var bleListener: IBleListener? = null
 
+    private var device: BluetoothDevice? = null
+
     //    private var macAddress = "6F:66:6C:6F:10:0F"
 //    private var macAddress = "6F:66:6C:6F:04:18"
     private var serviceUuid: UUID = UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb")
@@ -164,6 +166,8 @@ class BleHelper(context: Context) {
         if (device?.address?.isEmpty()!!)
             return isConnectBleEnabled
 
+        this.device = device
+
         if (isConnectBleEnabled != enabled) {
             if (enabled)
                 connectBle(device.address)
@@ -176,6 +180,9 @@ class BleHelper(context: Context) {
     }
 
     private fun connectBle(macAddress: String) {
+        if (connectBleSubscriptionDisposable != null)
+            return
+
         Timber.d("connectBle")
         val rxBleDevice = rxBleClient.getBleDevice(macAddress)
         rxBleDevice
@@ -186,6 +193,8 @@ class BleHelper(context: Context) {
                 Timber.d("rxBleConnection.mtu:${rxBleConnection.mtu}")
 
                 bleListener?.onBleConnected(macAddress)
+
+                stopConnectBleTimer()
             }, { throwable ->
                 Timber.d(throwable)
                 bleListener?.onConnectBleError(throwable.toString())
@@ -358,34 +367,36 @@ class BleHelper(context: Context) {
         return rxBleClient.getBleDevice(macAddress).bluetoothDevice
     }
 
-//    fun startConnectBleTimer() {
-//        if (connectBleTimerDisposable != null)
-//            return
-//
-//        Single.create<Boolean> {
-//            it.onSuccess(isConnectBleEnabled)
-//
-//        }.repeatWhen { completed ->
-//            completed.delay(2, TimeUnit.SECONDS)
-//        }
-//            .subscribe { isConnectBleEnabled ->
-//                Timber.d("connect ble enabled:$isConnectBleEnabled")
-//                if (!isConnectBleEnabled) {
-//                    enabledConnectBle(!isConnectBleEnabled, device)
-//                }
-//            }
-//            .apply {
-//                connectBleTimerDisposable = this
-//            }
-//    }
-//
-//    private var connectBleTimerDisposable: Disposable? = null
-//    fun stopConnectBleTimer() {
-//        if (connectBleTimerDisposable != null) {
-//            connectBleTimerDisposable?.dispose()
-//            connectBleTimerDisposable = null
-//        }
-//    }
+    fun startConnectBleTimer() {
+        if (connectBleTimerDisposable != null)
+            return
+
+        Single
+            .create<Boolean> {
+                it.onSuccess(isConnectBleEnabled)
+            }
+            .repeatWhen { completed ->
+                completed.delay(2, TimeUnit.SECONDS)
+            }
+            .subscribe { isConnectBleEnabled ->
+                Timber.d("connect ble enabled:$isConnectBleEnabled")
+                if (!isConnectBleEnabled) {
+                    if (device?.address != null)
+                        connectBle(device!!.address)
+                }
+            }
+            .apply {
+                connectBleTimerDisposable = this
+            }
+    }
+
+    private var connectBleTimerDisposable: Disposable? = null
+    fun stopConnectBleTimer() {
+        if (connectBleTimerDisposable != null) {
+            connectBleTimerDisposable?.dispose()
+            connectBleTimerDisposable = null
+        }
+    }
 
 
     interface IBleListener {
