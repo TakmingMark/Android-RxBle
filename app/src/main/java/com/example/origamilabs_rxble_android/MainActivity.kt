@@ -1,10 +1,13 @@
 package com.example.origamilabs_rxble_android
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View.*
 import android.widget.Button
+import android.widget.Toast
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.activity_main.*
@@ -29,6 +32,10 @@ class MainActivity : AppCompatActivity() {
 
     private val bluetoothManager: BluetoothManager by lazy {
         BluetoothManager(this)
+    }
+
+    private val bleServiceHandler:BleServiceHandler by lazy {
+        BleServiceHandler(this,bleServiceConnectionListener)
     }
 
     private var grantPermissionsDisposable: Disposable? = null
@@ -101,6 +108,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val bleServiceConnectionListener=object:
+        BleServiceHandler.BleServiceConnectionListener {
+        override fun onConnected() {
+            bleServiceHandler.connectDevice(mac_address_edit_text.text.toString())
+            bleServiceHandler.setListener(bluetoothManagerListener)
+        }
+
+        override fun onDisconnected() {
+
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -172,7 +192,14 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        auto_connect_button.setOnClickListener {
+        start_service_and_connect_button.setOnClickListener {
+            if(mac_address_edit_text.text.toString().length==17)
+            bindService()
+            else
+                Toast.makeText(this,"Please enter mac address then retry",Toast.LENGTH_LONG).show()
+        }
+
+        auto_connect_without_service_button.setOnClickListener {
             bluetoothManager.connectDevice(mac_address_edit_text.text.toString(), true)
         }
 
@@ -239,5 +266,13 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
 //        bluetoothManager.unregisterReceivers()
+    }
+
+    private fun bindService(){
+        bindService(
+            Intent(this, BleService::class.java),
+            bleServiceHandler.getServiceConnection(),
+            Context.BIND_AUTO_CREATE
+        )
     }
 }

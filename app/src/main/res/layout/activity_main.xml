@@ -238,23 +238,42 @@
                 app:layout_constraintTop_toBottomOf="@id/refresh_text_view" />
 
             <TextView
-                android:id="@+id/auto_connect_text_view"
+                android:id="@+id/start_service_and_connect_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="Auto connect:"
+                android:text="Start service and connect:"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/complicated_operation_text_view" />
 
             <Button
-                android:id="@+id/auto_connect_button"
+                android:id="@+id/start_service_and_connect_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="START"
-                app:layout_constraintBottom_toBottomOf="@id/auto_connect_text_view"
-                app:layout_constraintStart_toEndOf="@id/auto_connect_text_view"
-                app:layout_constraintTop_toTopOf="@id/auto_connect_text_view" />
+                app:layout_constraintBottom_toBottomOf="@id/start_service_and_connect_text_view"
+                app:layout_constraintStart_toEndOf="@id/start_service_and_connect_text_view"
+                app:layout_constraintTop_toTopOf="@id/start_service_and_connect_text_view" />
+
+            <TextView
+                android:id="@+id/auto_connect_without_service_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Auto connect without service:"
+                android:textSize="20sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/start_service_and_connect_text_view" />
+
+            <Button
+                android:id="@+id/auto_connect_without_service_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="START"
+                app:layout_constraintBottom_toBottomOf="@id/auto_connect_without_service_text_view"
+                app:layout_constraintStart_toEndOf="@id/auto_connect_without_service_text_view"
+                app:layout_constraintTop_toTopOf="@id/auto_connect_without_service_text_view" />
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>
