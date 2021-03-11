@@ -1,19 +1,11 @@
 package com.example.origamilabs_rxble_android
 
 import android.Manifest
-import android.bluetooth.*
-import android.content.Context
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.provider.Settings
-import android.view.View
 import android.view.View.*
 import android.widget.Button
-import com.polidea.rxandroidble2.RxBleClient
-import com.polidea.rxandroidble2.RxBleConnection
 import com.tbruyelle.rxpermissions2.RxPermissions
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.activity_main.*
 import timber.log.Timber
@@ -33,11 +25,45 @@ class MainActivity : AppCompatActivity() {
         BleHelper(this)
     }
 
-    private val bluetoothManager:BluetoothManager by lazy {
+    private val bluetoothManager: BluetoothManager by lazy {
         BluetoothManager(this)
     }
 
     private var grantPermissionsDisposable: Disposable? = null
+
+    private val bluetoothManagerListener = object : BluetoothManagerListener() {
+        override fun onObserveBleState(state: String) {
+            appendMessageView("observeBleState:$state")
+        }
+
+        override fun onObserveBleStateError(error: String) {
+            appendMessageView(error)
+        }
+
+        override fun onScan(macAddress: String, deviceName: String, rssi: Int) {
+            appendMessageView("Found $macAddress,$deviceName,$rssi")
+        }
+
+        override fun onScanError(error: String) {
+            appendMessageView(error)
+        }
+
+        override fun onBleConnected(macAddress: String) {
+            appendMessageView("connected $macAddress")
+        }
+
+        override fun onConnectBleError(error: String) {
+            appendMessageView(error)
+        }
+
+        override fun onListenNotification(characteristicUuid: UUID, value: Int) {
+            appendMessageView("Listen:$value")
+        }
+
+        override fun onListenNotificationError(error: String) {
+            appendMessageView(error)
+        }
+    }
 
     private val bleListener = object : BleListener() {
         override fun onObserveBleState(state: String) {
@@ -56,7 +82,7 @@ class MainActivity : AppCompatActivity() {
             appendMessageView(error)
         }
 
-        override fun onConnectBle(macAddress: String) {
+        override fun onBleConnected(macAddress: String) {
             appendMessageView("connected $macAddress")
         }
 
@@ -86,6 +112,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun initListener() {
         bleHelper.bleListener = this.bleListener
+        bluetoothManager.bluetoothManagerListener = this.bluetoothManagerListener
 
         observe_bluetooth_state_button.setOnClickListener {
             bleHelper.enabledObserveBleState(!bleHelper.isObserveBleStateEnabled)
@@ -101,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         connect_button.setOnClickListener {
-            bleHelper.enabledConnectBle(!bleHelper.isConnectBleEnabled)
+            bleHelper.enabledConnectBle(!bleHelper.isConnectBleEnabled,bleHelper.getBluetoothDevice(mac_address_edit_text.text.toString()))
             changeEnabledButtonText(bleHelper.isConnectBleEnabled, connect_button)
         }
 
@@ -119,13 +146,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         bonded_button.setOnClickListener {
-            val bluetoothDevice = bleHelper.getBleDevice()?.bluetoothDevice
+            val bluetoothDevice = bleHelper.getBleDevice(mac_address_edit_text.text.toString())?.bluetoothDevice
             if (bluetoothDevice != null)
                 bluetoothHelper.bondDevice(bluetoothDevice)
         }
 
         connect_a2dp_button.setOnClickListener {
-            val bluetoothDevice = bleHelper.getBleDevice()?.bluetoothDevice
+            val bluetoothDevice = bleHelper.getBleDevice(mac_address_edit_text.text.toString())?.bluetoothDevice
             if (bluetoothDevice != null)
                 bluetoothHelper.connectA2dp(bluetoothDevice)
         }
@@ -139,13 +166,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         auto_connect_button.setOnClickListener {
-            bluetoothManager.connectDevice(true)
+            bluetoothManager.connectDevice(mac_address_edit_text.text.toString(),true)
+        }
+
+        refresh_button.setOnClickListener {
+            bleHelper.enabledConnectBle(!bleHelper.isConnectBleEnabled, bleHelper.getBluetoothDevice(mac_address_edit_text.text.toString()))
         }
 
         scroll_2_view.viewTreeObserver.addOnGlobalLayoutListener {
             scroll_2_view.post {
                 scroll_2_view.fullScroll(FOCUS_DOWN)
             }
+        }
+
+        clear_button.setOnClickListener {
+            message_text_view.text=""
         }
     }
 
@@ -191,6 +226,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        bluetoothManager.unregisterReceivers()
+//        bluetoothManager.unregisterReceivers()
     }
 }

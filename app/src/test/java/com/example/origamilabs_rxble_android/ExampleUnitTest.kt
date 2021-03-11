@@ -1,10 +1,12 @@
 package com.example.origamilabs_rxble_android
 
+import io.reactivex.Completable
 import io.reactivex.Observable
+import io.reactivex.Single
+import io.reactivex.disposables.Disposable
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.text.SimpleDateFormat
-import java.util.*
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
 /**
@@ -21,30 +23,49 @@ class ExampleUnitTest {
 
     @Test
     fun scan() {
-        val scanObservable =
-            Observable.just(
-                "Hello",
-                " World!",
-                " This",
-                " is",
-                " Wonderful",
-                " World"
-            )
-                .scan { t1: String, t2: String ->
+//        val myObservable = Observable.just("a", "b", "c")
+//        myObservable.repeatWhen { completed ->
+//            completed.delay(
+//                3,
+//                TimeUnit.SECONDS
+//            )
+//        }
+//            .subscribe { x: String? -> println(x) }
 
-                    println(t1)
-                    t1 + t2
-                }
+        var time = 0
+        var disposable:Disposable?=null
+        Single.create<Boolean> {
+            time++
+            it.onSuccess(true)
 
-
-        scanObservable.subscribe {
-//            println(it)
+        }.repeatWhen { completed ->
+            completed.delay(3, TimeUnit.SECONDS)
         }
+            .subscribe {
+                println(it)
+                if(time==3)
+                    disposable?.dispose()
+            }
+            .apply {
+                disposable=this
+            }
+        Thread.sleep(15000)
+//        Completable
+//            .create {
+//                it.onComplete()
+//            }
+//            .repeatWhen{completed->
+//                completed.delay (3,TimeUnit.SECONDS)
+//            }
+//            .subscribe {
+//
+//            }
     }
 
     @Test
-    fun test(){
+    fun test() {
     }
+
     @Test
     fun concatMap() {
 
@@ -52,9 +73,9 @@ class ExampleUnitTest {
             .concatMap { i ->
 
                 Observable.intervalRange(0, 3, 0, 1, TimeUnit.SECONDS)
-                    .map { n->
+                    .map { n ->
                         println(n)
-                            "($n : $i)"
+                        "($n : $i)"
                     }
             }.subscribe {
 
