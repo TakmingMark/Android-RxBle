@@ -100,6 +100,9 @@ class BluetoothManager(private val context: Context) {
                     this.contains("status 40") ->{
                         bleHelper.startConnectBleTimer()
                     }
+                    this.contains("status 22")->{
+                        bleHelper.startConnectBleTimer()
+                    }
                 }
             }
         }
