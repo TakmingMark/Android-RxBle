@@ -107,7 +107,7 @@ class BluetoothHelper(context: Context) {
             }
     }
 
-    fun checkA2dpConnectedTimer(device: BluetoothDevice) {
+    fun checkA2dpConnectedTimer() {
         disposeCheckA2dpConnectedTimer()
 
         Single.create<Boolean> {

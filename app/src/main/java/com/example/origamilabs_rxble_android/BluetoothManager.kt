@@ -103,6 +103,9 @@ class BluetoothManager(private val context: Context) {
                     this.contains("status 22")->{
                         bleHelper.startConnectBleTimer()
                     }
+                    this.contains("status 19")->{
+                        bleHelper.startConnectBleTimer()
+                    }
                 }
             }
         }
@@ -145,7 +148,7 @@ class BluetoothManager(private val context: Context) {
             return
 
         if (bluetoothHelper.isBondedDevice(device!!)) {
-            bluetoothHelper.checkA2dpConnectedTimer(device!!)
+            bluetoothHelper.checkA2dpConnectedTimer()
         }
     }
 
