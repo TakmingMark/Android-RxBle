@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/bluetooth_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Bluetooth Operation"
+        android:textColor="#FF9800"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/bonded_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Bond device:"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/bluetooth_text_view" />
+
+    <Button
+        android:id="@+id/bonded_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="START"
+        app:layout_constraintBottom_toBottomOf="@id/bonded_text_view"
+        app:layout_constraintStart_toEndOf="@id/bonded_text_view"
+        app:layout_constraintTop_toTopOf="@id/bonded_text_view" />
+
+    <TextView
+        android:id="@+id/connect_a2dp_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Connect A2DP:"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/bonded_text_view" />
+
+    <Button
+        android:id="@+id/connect_a2dp_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="START"
+        app:layout_constraintBottom_toBottomOf="@id/connect_a2dp_text_view"
+        app:layout_constraintStart_toEndOf="@id/connect_a2dp_text_view"
+        app:layout_constraintTop_toTopOf="@id/connect_a2dp_text_view" />
+
+    <TextView
+        android:id="@+id/check_bond_state_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Check bond state:"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/connect_a2dp_text_view" />
+
+    <Button
+        android:id="@+id/check_bond_state_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="START"
+        app:layout_constraintBottom_toBottomOf="@id/check_bond_state_text_view"
+        app:layout_constraintStart_toEndOf="@id/check_bond_state_text_view"
+        app:layout_constraintTop_toTopOf="@id/check_bond_state_text_view" />
+</androidx.constraintlayout.widget.ConstraintLayout>

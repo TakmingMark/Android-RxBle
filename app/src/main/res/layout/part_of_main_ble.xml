@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+
+        <TextView
+            android:id="@+id/ble_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BLE Operation"
+            android:textColor="#FF9800"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/observe_bluetooth_state_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Observe bluetooth state:"
+            android:textSize="20sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ble_text_view" />
+
+        <Button
+            android:id="@+id/observe_bluetooth_state_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enabled"
+            app:layout_constraintBottom_toBottomOf="@id/observe_bluetooth_state_text_view"
+            app:layout_constraintStart_toEndOf="@id/observe_bluetooth_state_text_view"
+            app:layout_constraintTop_toTopOf="@id/observe_bluetooth_state_text_view" />
+
+        <TextView
+            android:id="@+id/scan_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Scan:"
+            android:textSize="20sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/observe_bluetooth_state_text_view" />
+
+        <Button
+            android:id="@+id/scan_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ENABLED"
+            app:layout_constraintBottom_toBottomOf="@id/scan_text_view"
+            app:layout_constraintStart_toEndOf="@id/scan_text_view"
+            app:layout_constraintTop_toTopOf="@id/scan_text_view" />
+
+
+        <TextView
+            android:id="@+id/connect_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Connect:"
+            android:textSize="20sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/scan_text_view" />
+
+        <Button
+            android:id="@+id/connect_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enabled"
+            app:layout_constraintBottom_toBottomOf="@id/connect_text_view"
+            app:layout_constraintStart_toEndOf="@id/connect_text_view"
+            app:layout_constraintTop_toTopOf="@id/connect_text_view" />
+
+        <TextView
+            android:id="@+id/discover_service_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Discover service:"
+            android:textSize="20sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/connect_text_view" />
+
+        <Button
+            android:id="@+id/discover_service_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ENABLED"
+            app:layout_constraintBottom_toBottomOf="@id/discover_service_text_view"
+            app:layout_constraintStart_toEndOf="@id/discover_service_text_view"
+            app:layout_constraintTop_toTopOf="@id/discover_service_text_view" />
+
+        <TextView
+            android:id="@+id/read_characteristic_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Read characteristic:"
+            android:textSize="20sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/discover_service_text_view" />
+
+        <Button
+            android:id="@+id/read_characteristic_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ENABLED"
+            app:layout_constraintBottom_toBottomOf="@id/read_characteristic_text_view"
+            app:layout_constraintStart_toEndOf="@id/read_characteristic_text_view"
+            app:layout_constraintTop_toTopOf="@id/read_characteristic_text_view" />
+
+
+        <TextView
+            android:id="@+id/listen_notification_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Listen notification:"
+            android:textSize="20sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/read_characteristic_text_view" />
+
+        <Button
+            android:id="@+id/listen_notification_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ENABLED"
+            app:layout_constraintBottom_toBottomOf="@id/listen_notification_text_view"
+            app:layout_constraintStart_toEndOf="@id/listen_notification_text_view"
+            app:layout_constraintTop_toTopOf="@id/listen_notification_text_view" />
+
+        <TextView
+            android:id="@+id/refresh_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Refresh BLE:"
+            android:textSize="20sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/listen_notification_text_view" />
+
+        <Button
+            android:id="@+id/refresh_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="START"
+            app:layout_constraintBottom_toBottomOf="@id/refresh_text_view"
+            app:layout_constraintStart_toEndOf="@id/refresh_text_view"
+            app:layout_constraintTop_toTopOf="@id/refresh_text_view" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
