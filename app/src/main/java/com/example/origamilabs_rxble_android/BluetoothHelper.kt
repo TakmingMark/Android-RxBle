@@ -138,6 +138,10 @@ class BluetoothHelper(context: Context) {
         return device.bondState==BluetoothDevice.BOND_BONDED
     }
 
+    fun printDeviceBondState(device: BluetoothDevice?){
+        Timber.d("printDeviceBondState:${device?.bondState}")
+    }
+
     fun isA2dpConnected(): Boolean {
         return bluetoothAdapter.getProfileConnectionState(BluetoothA2dp.A2DP) == BluetoothA2dp.STATE_CONNECTED
     }

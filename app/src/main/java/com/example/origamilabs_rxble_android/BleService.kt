@@ -49,4 +49,12 @@ class BleService : Service() {
     fun connectDevice(macAddress: String){
         bluetoothManager.connectDevice(macAddress,false)
     }
+
+    fun scanDevice(){
+        bluetoothManager.scanDevice()
+    }
+
+    fun stopScanDevice(){
+        bluetoothManager.stopScanDevice()
+    }
 }

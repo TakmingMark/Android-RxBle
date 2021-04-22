@@ -19,6 +19,8 @@ class BluetoothManager(private val context: Context) {
         BleHelper(context)
     }
 
+    private var macAddress = ""
+
     private var device: BluetoothDevice? = null
 
     var bluetoothManagerListener: IBluetoothManagerListener? = null
@@ -32,10 +34,10 @@ class BluetoothManager(private val context: Context) {
 
             Timber.d("Bond state changed: $prevBondState => $newBondState")
 
-            if (this@BluetoothManager.device?.address == device?.address) {
-                if (newBondState == BluetoothDevice.BOND_BONDED)
-                    bluetoothHelper.connectA2dp(device!!)
-            }
+//            if (this@BluetoothManager.device?.address == device?.address) {
+//                if (newBondState == BluetoothDevice.BOND_BONDED)
+//                    bluetoothHelper.connectA2dp(device!!)
+//            }
         }
     }
 
@@ -59,7 +61,7 @@ class BluetoothManager(private val context: Context) {
         override fun onA2dpConnected() {
             if (!bleHelper.isConnectBleEnabled) {
                 bleHelper.enabledObserveBleState(true)
-                bleHelper.enabledConnectBle(true,device)
+                bleHelper.enabledConnectBle(true, device)
             }
 
         }
@@ -84,7 +86,7 @@ class BluetoothManager(private val context: Context) {
 
         override fun onBleConnected(macAddress: String) {
             bluetoothManagerListener?.onBleConnected(macAddress)
-            bleHelper.enabledListenNotification(!bleHelper.isListenNotificationEnabled)
+            bleHelper.enabledDiscoverService(true)
         }
 
         override fun onConnectBleError(error: String) {
@@ -94,16 +96,16 @@ class BluetoothManager(private val context: Context) {
                     this.contains("status 133") -> {
                         bleHelper.startConnectBleTimer()
                     }
-                    this.contains("status 8") ->{
+                    this.contains("status 8") -> {
                         bleHelper.startConnectBleTimer()
                     }
-                    this.contains("status 40") ->{
+                    this.contains("status 40") -> {
                         bleHelper.startConnectBleTimer()
                     }
-                    this.contains("status 22")->{
+                    this.contains("status 22") -> {
                         bleHelper.startConnectBleTimer()
                     }
-                    this.contains("status 19")->{
+                    this.contains("status 19") -> {
                         bleHelper.startConnectBleTimer()
                     }
                 }
@@ -112,6 +114,7 @@ class BluetoothManager(private val context: Context) {
 
         override fun onDiscoverBleService(serviceUuid: UUID) {
             bluetoothManagerListener?.onDiscoverBleService(serviceUuid)
+            bleHelper.enabledListenNotification(!bleHelper.isListenNotificationEnabled)
         }
 
         override fun onDiscoverBleServiceError(error: String) {
@@ -140,16 +143,27 @@ class BluetoothManager(private val context: Context) {
         bluetoothHelper.bluetoothListener = bluetoothListener
     }
 
-    fun connectDevice(macAddress: String,auto: Boolean) {
+    fun scanDevice() {
+        bleHelper.enabledScan(true)
+    }
+
+    fun stopScanDevice(){
+        bleHelper.enabledScan(false)
+    }
+
+    fun connectDevice(macAddress: String, auto: Boolean) {
         val bluetoothDevice = bleHelper.getBluetoothDevice(macAddress)
         device = bluetoothDevice
 
         if (device == null)
             return
 
-        if (bluetoothHelper.isBondedDevice(device!!)) {
-            bluetoothHelper.checkA2dpConnectedTimer()
-        }
+        bluetoothHelper.checkA2dpConnectedTimer()
+    }
+
+    fun printDeviceBondState(macAddress: String){
+        val bluetoothDevice = bleHelper.getBluetoothDevice(macAddress)
+        bluetoothHelper.printDeviceBondState(bluetoothDevice)
     }
 
     fun registerReceivers() {

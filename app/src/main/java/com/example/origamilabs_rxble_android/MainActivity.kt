@@ -11,6 +11,8 @@ import android.widget.Toast
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.part_of_main_ble.*
+import kotlinx.android.synthetic.main.part_of_main_bluetooth.*
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
@@ -34,8 +36,8 @@ class MainActivity : AppCompatActivity() {
         BluetoothManager(this)
     }
 
-    private val bleServiceHandler:BleServiceHandler by lazy {
-        BleServiceHandler(this,bleServiceConnectionListener)
+    private val bleServiceHandler: BleServiceHandler by lazy {
+        BleServiceHandler(this, bleServiceConnectionListener)
     }
 
     private var grantPermissionsDisposable: Disposable? = null
@@ -51,6 +53,11 @@ class MainActivity : AppCompatActivity() {
 
         override fun onScan(macAddress: String, deviceName: String, rssi: Int) {
             appendMessageView("Found $macAddress,$deviceName,$rssi")
+
+            if(mac_address_edit_text.text.toString()==macAddress){
+                bleServiceHandler.connectDevice(macAddress)
+                bleServiceHandler.stopScanDevice()
+            }
         }
 
         override fun onScanError(error: String) {
@@ -85,6 +92,7 @@ class MainActivity : AppCompatActivity() {
 
         override fun onScan(macAddress: String, deviceName: String, rssi: Int) {
             appendMessageView("Found $macAddress,$deviceName,$rssi")
+
         }
 
         override fun onScanError(error: String) {
@@ -108,15 +116,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val bleServiceConnectionListener=object:
+    private val bleServiceConnectionListener = object :
         BleServiceHandler.BleServiceConnectionListener {
         override fun onConnected() {
-            bleServiceHandler.connectDevice(mac_address_edit_text.text.toString())
             bleServiceHandler.setListener(bluetoothManagerListener)
+            bleServiceHandler.scanDevice()
         }
 
         override fun onDisconnected() {
-
+            bleServiceHandler.stopScanDevice()
         }
     }
 
@@ -183,6 +191,10 @@ class MainActivity : AppCompatActivity() {
             if (bluetoothDevice != null)
                 bluetoothHelper.connectA2dp(bluetoothDevice)
         }
+        
+        check_bond_state_button.setOnClickListener { 
+            bluetoothManager.printDeviceBondState(mac_address_edit_text.text.toString())
+        }
 
         listen_notification_button.setOnClickListener {
             bleHelper.enabledListenNotification(!bleHelper.isListenNotificationEnabled)
@@ -193,10 +205,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         start_service_and_connect_button.setOnClickListener {
-            if(mac_address_edit_text.text.toString().length==17)
-            bindService()
+            if (mac_address_edit_text.text.toString().length == 17)
+                bindService()
             else
-                Toast.makeText(this,"Please enter mac address then retry",Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Please enter mac address then retry", Toast.LENGTH_LONG)
+                    .show()
         }
 
         auto_connect_without_service_button.setOnClickListener {
@@ -208,6 +221,10 @@ class MainActivity : AppCompatActivity() {
                 !bleHelper.isConnectBleEnabled,
                 bleHelper.getBluetoothDevice(mac_address_edit_text.text.toString())
             )
+        }
+
+        crash_app_button.setOnClickListener {
+            throw Exception("")
         }
 
         scroll_2_view.viewTreeObserver.addOnGlobalLayoutListener {
@@ -268,7 +285,7 @@ class MainActivity : AppCompatActivity() {
 //        bluetoothManager.unregisterReceivers()
     }
 
-    private fun bindService(){
+    private fun bindService() {
         bindService(
             Intent(this, BleService::class.java),
             bleServiceHandler.getServiceConnection(),

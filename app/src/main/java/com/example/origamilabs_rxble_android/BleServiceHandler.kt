@@ -33,15 +33,23 @@ class BleServiceHandler(
         return serviceConnection
     }
 
-    fun setListener(bluetoothManagerListener: BluetoothManagerListener){
+    fun setListener(bluetoothManagerListener: BluetoothManagerListener) {
         service?.setListener(bluetoothManagerListener)
     }
 
-    fun connectDevice(macAddress: String){
+    fun scanDevice() {
+        service?.scanDevice()
+    }
+
+    fun stopScanDevice() {
+        service?.stopScanDevice()
+    }
+
+    fun connectDevice(macAddress: String) {
         service?.connectDevice(macAddress)
     }
 
-    interface BleServiceConnectionListener{
+    interface BleServiceConnectionListener {
         fun onConnected()
         fun onDisconnected()
     }
