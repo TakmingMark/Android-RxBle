@@ -33,11 +33,6 @@ class BluetoothManager(private val context: Context) {
             val prevBondState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, -1)
 
             Timber.d("Bond state changed: $prevBondState => $newBondState")
-
-//            if (this@BluetoothManager.device?.address == device?.address) {
-//                if (newBondState == BluetoothDevice.BOND_BONDED)
-//                    bluetoothHelper.connectA2dp(device!!)
-//            }
         }
     }
 
