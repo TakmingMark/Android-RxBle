@@ -1,14 +1,35 @@
+# Gradle / Android Studio
+build/
+.idea/
+.gradle/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+
+# Mac temp file
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+
+# Captures
+captures/
+
+# .hprof file
+*.hprof
+
+# Android
+local.properties
+
+# Release
+app/release/
+app/uiWatch/
+app/uiPhone/
+app/uifreeWatch/
+app/uifreePhone/
+
+
+# Native
+src/main/libs/
+src/main/obj/
+
+# Java
+*.class
+
+# Fabric
+app/fabric.properties
