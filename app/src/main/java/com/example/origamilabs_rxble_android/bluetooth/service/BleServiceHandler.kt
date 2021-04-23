@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.*
-import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManagerListener
 import timber.log.Timber
 import java.lang.Exception
 
@@ -23,18 +22,29 @@ class BleServiceHandler(
         const val BUNDLE_SERVICE_EXTERNAL_VALUE_KEY = "bundle_send_service_external_value_key"
 
         const val BUNDLE_SERVICE_HANDLER_MESSAGE_KEY = "bundle_send_handler_message_key"
-        const val BUNDLE_SERVICE_HANDLER_EXTERNAL_VALUE_KEY = "bundle_send_handler_external_value_key"
+        const val BUNDLE_SERVICE_HANDLER_EXTERNAL_VALUE_KEY =
+            "bundle_send_handler_external_value_key"
 
-        const val INTENT_SERVICE_SCAN_DEVICE = "intent_scan_device"
-        const val INTENT_SERVICE_CONNECT_DEVICE = "connect_device"
-        const val INTENT_SERVICE_RECEIVED_BLE_VALUE = "intent_received_ble_value"
+        const val INTENT_SERVICE_START_SCAN = "intent_service_start_scan"
+        const val INTENT_SERVICE_STOP_SCAN = "intent_service_stop_scan"
+        const val INTENT_SERVICE_START_CONNECT = "intent_service_start_connect"
+        const val INTENT_SERVICE_STOP_CONNECT = "intent_service_stop_connect"
 
-        const val INTENT_SERVICE_HANDLER_DISCOVER_DEVICE_MAC_ADDRESS = "intent_discovery_device_MAC_ADDRESS"
+        const val INTENT_SERVICE_HANDLER_SCAN_SUCCESS = "intent_service_handler_scan_success"
+        const val INTENT_SERVICE_HANDLER_SCAN_FAILURE = "intent_service_handler_scan_failure"
+        const val INTENT_SERVICE_HANDLER_CONNECT_SUCCESS = "intent_service_handler_connect_success"
+        const val INTENT_SERVICE_HANDLER_CONNECT_FAILURE = "intent_service_handler_connect_failure"
+
+        const val INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_SUCCESS =
+            "intent_service_handler_listen_notification"
+
     }
+
+    var isBound = false
+        private set
 
     private val messenger = Messenger(BleServiceHandlerMessageHandler(looper))
 
-    //    private var service: BleService? = null
     private var service: Messenger? = null
 
     private val serviceConnection = object : ServiceConnection {
@@ -45,20 +55,15 @@ class BleServiceHandler(
                 BleService::class.java
             )
             context.startService(intent)
+            sendMessageToService(MSG_REGISTER_CLIENT)
 
-            try {
-                val msg = Message.obtain(null, MSG_REGISTER_CLIENT)
-                msg.replyTo = messenger
-                service?.send(msg)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
+            isBound = true
             bleServiceConnectionListener.onConnected()
         }
 
         override fun onServiceDisconnected(p0: ComponentName?) {
             service = null
+            isBound = false
             bleServiceConnectionListener.onDisconnected()
         }
     }
@@ -67,46 +72,53 @@ class BleServiceHandler(
         return serviceConnection
     }
 
-    fun setListener(bluetoothManagerListener: BluetoothManagerListener) {
-
-//        service?.setListener(bluetoothManagerListener)
-    }
-
-    fun scanDevice() {
-        sendMessageToService(INTENT_SERVICE_SCAN_DEVICE)
-//        service?.scanDevice()
+    fun startScanDevice() {
+        sendMessageToService(MSG_SEND_VALUE, INTENT_SERVICE_START_SCAN)
     }
 
     fun stopScanDevice() {
-//        service?.stopScanDevice()
+        sendMessageToService(MSG_SEND_VALUE, INTENT_SERVICE_STOP_SCAN)
     }
 
-    fun connectDevice(macAddress: String) {
-        sendMessageToService(INTENT_SERVICE_CONNECT_DEVICE, macAddress)
-//        service?.connectDevice(macAddress)
+    fun startConnectDevice(macAddress: String) {
+        sendMessageToService(MSG_SEND_VALUE, INTENT_SERVICE_START_CONNECT, macAddress)
     }
 
-    private fun sendMessageToService(message: String) {
-        val bundle = Bundle()
-        bundle.putString(BUNDLE_SERVICE_MESSAGE_KEY, message)
-        val msg = Message.obtain()
-        msg.data = bundle
+    fun stopConnectDevice() {
+        sendMessageToService(MSG_SEND_VALUE, INTENT_SERVICE_STOP_CONNECT)
+    }
 
+    private fun sendMessageToService(msgNumber: Int) {
         try {
+            val msg = Message.obtain(null, msgNumber)
+            msg.replyTo = messenger
             service?.send(msg)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    private fun sendMessageToService(message: String, externalValue: String) {
-        val bundle = Bundle()
-        bundle.putString(BUNDLE_SERVICE_MESSAGE_KEY, message)
-        bundle.putString(BUNDLE_SERVICE_EXTERNAL_VALUE_KEY, externalValue)
-        val msg = Message.obtain()
-        msg.data = bundle
-
+    private fun sendMessageToService(msgNumber: Int, msgKey: String?) {
         try {
+            val msg = Message.obtain(null, msgNumber)
+            val bundle = Bundle()
+            bundle.putString(BUNDLE_SERVICE_MESSAGE_KEY, msgKey)
+            msg.data = bundle
+            msg.replyTo = messenger
+            service?.send(msg)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun sendMessageToService(msgNumber: Int, msgKey: String, externalValue: String) {
+        try {
+            val msg = Message.obtain(null, msgNumber)
+            val bundle = Bundle()
+            bundle.putString(BUNDLE_SERVICE_MESSAGE_KEY, msgKey)
+            bundle.putString(BUNDLE_SERVICE_EXTERNAL_VALUE_KEY, externalValue)
+            msg.data = bundle
+            msg.replyTo = messenger
             service?.send(msg)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -115,22 +127,44 @@ class BleServiceHandler(
 
     inner class BleServiceHandlerMessageHandler(looper: Looper) : Handler(looper) {
         override fun handleMessage(msg: Message) {
-            super.handleMessage(msg)
-            val bundle = msg.data
-            if (bundle != null) {
-                val messageKey = bundle.getString(BUNDLE_SERVICE_HANDLER_MESSAGE_KEY)
-                when (messageKey) {
-                    INTENT_SERVICE_HANDLER_DISCOVER_DEVICE_MAC_ADDRESS -> {
-                        val discoverDeviceMacAddress = bundle.getString(
-                            BUNDLE_SERVICE_HANDLER_EXTERNAL_VALUE_KEY
-                        )
-                        if (discoverDeviceMacAddress != null)
-                            bleServiceConnectionListener.onDiscoverDeviceMacAddress(
-                                discoverDeviceMacAddress
-                            )
+            Timber.d("msg.what:${msg.what}")
+            when (msg.what) {
+                MSG_SEND_VALUE -> {
+                    val bundle = msg.data
+                    if (bundle != null) {
+                        val messageKey = bundle.getString(BUNDLE_SERVICE_MESSAGE_KEY)
+                        Timber.d("messageKey:$messageKey")
+                        when (messageKey) {
+                            INTENT_SERVICE_HANDLER_SCAN_SUCCESS -> {
+                                val macAddress = bundle.getString(
+                                    BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
+                                ) ?: return
+                                bleServiceConnectionListener.onScanSuccess(macAddress)
+                            }
+                            INTENT_SERVICE_HANDLER_SCAN_FAILURE -> {
+                                val error = bundle.getString(
+                                    BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
+                                ) ?: return
+                                bleServiceConnectionListener.onScanSuccess(error)
+                            }
+                            INTENT_SERVICE_HANDLER_CONNECT_SUCCESS->{
+                                val macAddress = bundle.getString(
+                                    BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
+                                ) ?: return
+                                bleServiceConnectionListener.onConnectSuccess(macAddress)
+                            }
+                            INTENT_SERVICE_HANDLER_CONNECT_FAILURE -> {
+                                val error = bundle.getString(
+                                    BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
+                                ) ?: return
+                                bleServiceConnectionListener.onConnectFailure(error)
+                            }
+                        }
                     }
                 }
-                Timber.d("messageKey:$messageKey")
+                else -> {
+                    super.handleMessage(msg)
+                }
             }
         }
     }
@@ -139,6 +173,10 @@ class BleServiceHandler(
         fun onConnected()
         fun onDisconnected()
 
-        fun onDiscoverDeviceMacAddress(macAddress: String)
+        fun onScanSuccess(macAddress: String)
+        fun onScanFailure(error: String)
+
+        fun onConnectSuccess(macAddress: String)
+        fun onConnectFailure(error: String)
     }
 }

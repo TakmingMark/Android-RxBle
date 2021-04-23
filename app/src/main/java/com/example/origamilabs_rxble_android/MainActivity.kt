@@ -17,6 +17,7 @@ import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.part_of_main_ble.*
 import kotlinx.android.synthetic.main.part_of_main_bluetooth.*
+import kotlinx.android.synthetic.main.part_of_main_service.*
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
@@ -43,20 +44,42 @@ class MainActivity : AppCompatActivity() {
     private val bleServiceConnectionListener = object :
         BleServiceHandler.BleServiceConnectionListener {
         override fun onConnected() {
-            bleServiceHandler.scanDevice()
+            appendMessageView("Ble Service connected")
+
+            changeEnabledButtonText(
+                bleServiceHandler.isBound,
+                bind_service_button
+            )
         }
 
         override fun onDisconnected() {
-            bleServiceHandler.stopScanDevice()
+            appendMessageView("Ble Service disconnected")
+
+            changeEnabledButtonText(
+                bleServiceHandler.isBound,
+                bind_service_button
+            )
         }
 
-        override fun onDiscoverDeviceMacAddress(macAddress: String) {
-            appendMessageView("Found $macAddress")
+        override fun onScanSuccess(macAddress: String) {
+            appendMessageView("onScanSuccess: $macAddress")
 
             if (mac_address_edit_text.text.toString() == macAddress) {
-                bleServiceHandler.connectDevice(macAddress)
                 bleServiceHandler.stopScanDevice()
+                bleServiceHandler.startConnectDevice(macAddress)
             }
+        }
+
+        override fun onScanFailure(error: String) {
+            appendMessageView("onScanFailure: $error")
+        }
+
+        override fun onConnectSuccess(macAddress: String) {
+            appendMessageView("onConnectSuccess: $macAddress")
+        }
+
+        override fun onConnectFailure(error: String) {
+            appendMessageView("onConnectFailure: $error")
         }
     }
 
@@ -101,7 +124,7 @@ class MainActivity : AppCompatActivity() {
 
             when (bluetoothManager.isConnectDeviceRunning()) {
                 true -> bluetoothManager.stopConnectDevice()
-                false ->{
+                false -> {
                     val macAddress = mac_address_edit_text.text.toString()
                     bluetoothManager.startConnectDevice(macAddress)
                 }
@@ -145,9 +168,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         auto_connect_button.setOnClickListener {
-            when(bluetoothManager.isAutoConnectRunning()){
-                true->bluetoothManager.stopAutoConnect()
-                false->{val macAddress=mac_address_edit_text.text.toString()
+            when (bluetoothManager.isAutoConnectRunning()) {
+                true -> bluetoothManager.stopAutoConnect()
+                false -> {
+                    val macAddress = mac_address_edit_text.text.toString()
                     bluetoothManager.startAutoConnect(macAddress)
                 }
             }
@@ -159,7 +183,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun initBluetoothViewListener(){
+    private fun initBluetoothViewListener() {
         bonded_button.setOnClickListener {
             val macAddress = mac_address_edit_text.text.toString()
             val device = bluetoothManager.getBluetoothDevice(macAddress)
@@ -178,18 +202,21 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun initServiceViewListener(){
-        start_service_and_connect_button.setOnClickListener {
-            if (mac_address_edit_text.text.toString().length == 17)
-                bindService()
-            else
-                Toast.makeText(this, "Please enter mac address then retry", Toast.LENGTH_LONG)
-                    .show()
+    private fun initServiceViewListener() {
+        bind_service_button.setOnClickListener {
+            when (bleServiceHandler.isBound) {
+                true -> unbindService()
+                false -> bindService()
+            }
+        }
+
+        service_auto_connect_button.setOnClickListener {
+            bleServiceHandler.startScanDevice()
         }
     }
 
 
-    private fun initOtherViewListener(){
+    private fun initOtherViewListener() {
         crash_app_button.setOnClickListener {
             throw Exception("")
         }
@@ -264,12 +291,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onScan(macAddress: String, deviceName: String, rssi: Int) {
-                    appendMessageView("Found $macAddress,$deviceName,$rssi")
-
-                    if (mac_address_edit_text.text.toString() == macAddress) {
-//                        bleServiceHandler.connectDevice(macAddress)
-//                        bleServiceHandler.stopScanDevice()
-                    }
+                    appendMessageView("onScan $macAddress,$deviceName,$rssi")
                 }
 
                 override fun onScanError(error: String) {

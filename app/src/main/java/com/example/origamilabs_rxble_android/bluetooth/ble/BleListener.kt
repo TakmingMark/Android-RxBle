@@ -1,5 +1,6 @@
 package com.example.origamilabs_rxble_android.bluetooth.ble
 
+import com.polidea.rxandroidble2.RxBleDevice
 import java.util.*
 
 open class BleListener : BleHelper.IBleListener {
@@ -9,7 +10,7 @@ open class BleListener : BleHelper.IBleListener {
     override fun onObserveBleStateError(error: String) {
     }
 
-    override fun onScan(macAddress: String, deviceName: String, rssi: Int) {
+    override fun onScan(macAddress1: RxBleDevice, macAddress: String, deviceName: String, rssi: Int) {
     }
 
     override fun onScanError(error: String) {

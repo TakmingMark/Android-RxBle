@@ -137,6 +137,7 @@ class BleHelper(context: Context) {
             .subscribe({ scanResult ->
                 if (!scanResult.bleDevice.name.isNullOrEmpty()) {
                     bleListener?.onScan(
+                        scanResult.bleDevice,
                         scanResult.bleDevice.macAddress,
                         scanResult.bleDevice.name!!,
                         scanResult.rssi
@@ -413,7 +414,7 @@ class BleHelper(context: Context) {
         fun onObserveBleState(state: String)
         fun onObserveBleStateError(error: String)
 
-        fun onScan(macAddress: String, deviceName: String, rssi: Int)
+        fun onScan(rxBleDevice: RxBleDevice, macAddress: String, deviceName: String, rssi: Int)
         fun onScanError(error: String)
 
         fun onBleConnected(macAddress: String)
