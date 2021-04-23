@@ -78,13 +78,22 @@ class MainActivity : AppCompatActivity() {
             appendMessageView("onObserveBluetoothStateFailure:$error")
         }
 
+        override fun onCheckScanRunning(isRunning: Boolean) {
+            appendMessageView("onCheckScanRunning:$isRunning")
+
+            changeEnabledButtonText(
+                isRunning,
+                service_scan_button
+            )
+        }
+
         override fun onScanSuccess(macAddress: String) {
             appendMessageView("onScanSuccess: $macAddress")
 
-            if (mac_address_edit_text.text.toString() == macAddress) {
-                bleServiceHandler.stopScanDevice()
-                bleServiceHandler.startConnectDevice(macAddress)
-            }
+//            if (mac_address_edit_text.text.toString() == macAddress) {
+//                bleServiceHandler.stopScanDevice()
+//                bleServiceHandler.startConnectDevice(macAddress)
+//            }
         }
 
         override fun onScanFailure(error: String) {
@@ -228,14 +237,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         service_observe_bluetooth_state_button.setOnClickListener {
-            when(bleServiceHandler.isObserveBluetoothRunning){
-                true-> bleServiceHandler.stopObserveBluetoothState()
-                false->bleServiceHandler.startObserveBluetoothState()
+            when (bleServiceHandler.isObserveBluetoothRunning) {
+                true -> bleServiceHandler.stopObserveBluetoothState()
+                false -> bleServiceHandler.startObserveBluetoothState()
+            }
+        }
+
+        service_scan_button.setOnClickListener {
+            when (bleServiceHandler.isScanRunning) {
+                true -> bleServiceHandler.stopScanDevice()
+                false -> bleServiceHandler.startScanDevice()
             }
         }
 
         service_auto_connect_button.setOnClickListener {
-            bleServiceHandler.startScanDevice()
+
         }
     }
 

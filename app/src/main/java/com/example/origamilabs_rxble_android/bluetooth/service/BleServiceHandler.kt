@@ -31,6 +31,7 @@ class BleServiceHandler(
             "intent_service_start_observe_bluetooth_state"
         const val INTENT_SERVICE_STOP_OBSERVE_BLUETOOTH_STATE =
             "intent_service_stop_observe_bluetooth_state"
+        const val INTENT_SERVICE_CHECK_SCAN_RUNNING_STATE="intent_service_check_scan_running_state"
         const val INTENT_SERVICE_START_SCAN = "intent_service_start_scan"
         const val INTENT_SERVICE_STOP_SCAN = "intent_service_stop_scan"
         const val INTENT_SERVICE_START_CONNECT = "intent_service_start_connect"
@@ -42,9 +43,10 @@ class BleServiceHandler(
             "intent_service_handler_observe_bluetooth_state_success"
         const val INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_FAILURE =
             "intent_service_handler_observe_bluetooth_state_failure"
-
+        const val INTENT_SERVICE_HANDLER_RESPONSE_SCAN_RUNNING_STATE="intent_service_handler_response_scan_running_state"
         const val INTENT_SERVICE_HANDLER_SCAN_SUCCESS = "intent_service_handler_scan_success"
         const val INTENT_SERVICE_HANDLER_SCAN_FAILURE = "intent_service_handler_scan_failure"
+
         const val INTENT_SERVICE_HANDLER_CONNECT_SUCCESS = "intent_service_handler_connect_success"
         const val INTENT_SERVICE_HANDLER_CONNECT_FAILURE = "intent_service_handler_connect_failure"
 
@@ -57,6 +59,9 @@ class BleServiceHandler(
         private set
 
     var isObserveBluetoothRunning = false
+        private set
+    var isScanRunning = false
+        private set
 
     private val messenger = Messenger(BleServiceHandlerMessageHandler(looper))
 
@@ -72,6 +77,7 @@ class BleServiceHandler(
             context.startService(intent)
             sendMessageToService(MSG_REGISTER_CLIENT)
             checkObserveBluetoothRunningState()
+            checkScanRunningState()
 
             isBound = true
             bleServiceConnectionListener.onConnected()
@@ -106,6 +112,13 @@ class BleServiceHandler(
         sendMessageToService(
             MSG_SEND_VALUE,
             INTENT_SERVICE_STOP_OBSERVE_BLUETOOTH_STATE
+        )
+    }
+
+    fun checkScanRunningState(){
+        sendMessageToService(
+            MSG_SEND_VALUE,
+            INTENT_SERVICE_CHECK_SCAN_RUNNING_STATE
         )
     }
 
@@ -181,14 +194,23 @@ class BleServiceHandler(
                                 )
                             }
                             INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_SUCCESS -> {
-                                val state = bundle.getString(BUNDLE_SERVICE_EXTERNAL_VALUE_KEY)?:""
+                                val state =
+                                    bundle.getString(BUNDLE_SERVICE_EXTERNAL_VALUE_KEY) ?: ""
                                 bleServiceConnectionListener.onObserveBluetoothStateSuccess(state)
                             }
                             INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_FAILURE -> {
-                                val error = bundle.getString(BUNDLE_SERVICE_EXTERNAL_VALUE_KEY)?:""
+                                val error =
+                                    bundle.getString(BUNDLE_SERVICE_EXTERNAL_VALUE_KEY) ?: ""
                                 bleServiceConnectionListener.onObserveBluetoothStateFailure(error)
                             }
-
+                            INTENT_SERVICE_HANDLER_RESPONSE_SCAN_RUNNING_STATE->{
+                                isScanRunning = bundle.getBoolean(
+                                    BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
+                                )
+                                bleServiceConnectionListener.onCheckScanRunning(
+                                    isScanRunning
+                                )
+                            }
                             INTENT_SERVICE_HANDLER_SCAN_SUCCESS -> {
                                 val macAddress = bundle.getString(
                                     BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
@@ -228,9 +250,10 @@ class BleServiceHandler(
         fun onDisconnected()
 
         fun onCheckObserveBluetoothStateRunning(isRunning: Boolean)
-        fun onObserveBluetoothStateSuccess(state:String)
+        fun onObserveBluetoothStateSuccess(state: String)
         fun onObserveBluetoothStateFailure(error: String)
 
+        fun onCheckScanRunning(isRunning: Boolean)
         fun onScanSuccess(macAddress: String)
         fun onScanFailure(error: String)
 

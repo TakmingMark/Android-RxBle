@@ -17,6 +17,7 @@ import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_FAILURE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_SUCCESS
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_SCAN_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_SCAN_FAILURE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_OBSERVE_BLUETOOTH_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_SCAN
@@ -153,12 +154,22 @@ class BleService : Service() {
         checkObserveBluetoothStateRunning()
     }
 
+    private fun checkScanRunning(){
+        val isRunning = bluetoothManager.isScanDeviceRunning()
+        sendMessageToServiceHandler(
+            MSG_SEND_VALUE,
+            INTENT_SERVICE_HANDLER_RESPONSE_SCAN_RUNNING_STATE,
+            isRunning
+        )
+    }
     private fun startScanDevice() {
         bluetoothManager.startScanDevice()
+        checkScanRunning()
     }
 
     private fun stopScanDevice() {
         bluetoothManager.stopScanDevice()
+        checkScanRunning()
     }
 
     private fun connectDevice(macAddress: String?) {
