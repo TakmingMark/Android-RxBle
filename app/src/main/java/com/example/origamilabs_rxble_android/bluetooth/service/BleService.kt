@@ -14,9 +14,13 @@ import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_CONNECT
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_SCAN_SUCCESS
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_SUCCESS
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_FAILURE
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_SUCCESS
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_SCAN_FAILURE
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_OBSERVE_BLUETOOTH_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_SCAN
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_STOP_OBSERVE_BLUETOOTH_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_STOP_SCAN
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.MSG_REGISTER_CLIENT
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.MSG_SEND_VALUE
@@ -36,6 +40,22 @@ class BleService : Service() {
     private val notificationHelper = NotificationHelper(this)
 
     private val bluetoothManagerListener = object : BluetoothManagerListener() {
+        override fun onObserveBleState(state: String) {
+            sendMessageToServiceHandler(
+                MSG_SEND_VALUE,
+                INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_SUCCESS,
+                state
+            )
+        }
+
+        override fun onObserveBleStateError(error: String) {
+            sendMessageToServiceHandler(
+                MSG_SEND_VALUE,
+                INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_FAILURE,
+                error
+            )
+        }
+
         override fun onScan(macAddress: String, deviceName: String, rssi: Int) {
             sendMessageToServiceHandler(
                 MSG_SEND_VALUE,
@@ -123,6 +143,16 @@ class BleService : Service() {
         )
     }
 
+    private fun startObserveBluetoothState(){
+        bluetoothManager.startObserveBleState()
+        checkObserveBluetoothStateRunning()
+    }
+
+    private fun stopObserveBluetoothState(){
+        bluetoothManager.stopObserveBleState()
+        checkObserveBluetoothStateRunning()
+    }
+
     private fun startScanDevice() {
         bluetoothManager.startScanDevice()
     }
@@ -201,6 +231,12 @@ class BleService : Service() {
                         when (messageKey) {
                             INTENT_SERVICE_CHECK_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE -> {
                                 checkObserveBluetoothStateRunning()
+                            }
+                            INTENT_SERVICE_START_OBSERVE_BLUETOOTH_STATE->{
+                                startObserveBluetoothState()
+                            }
+                            INTENT_SERVICE_STOP_OBSERVE_BLUETOOTH_STATE->{
+                                stopObserveBluetoothState()
                             }
                             INTENT_SERVICE_START_SCAN -> {
                                 startScanDevice()

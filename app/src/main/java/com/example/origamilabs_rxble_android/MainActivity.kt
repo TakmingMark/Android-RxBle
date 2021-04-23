@@ -70,6 +70,14 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
+        override fun onObserveBluetoothStateSuccess(state: String) {
+            appendMessageView("onObserveBluetoothStateSuccess:$state")
+        }
+
+        override fun onObserveBluetoothStateFailure(error: String) {
+            appendMessageView("onObserveBluetoothStateFailure:$error")
+        }
+
         override fun onScanSuccess(macAddress: String) {
             appendMessageView("onScanSuccess: $macAddress")
 
@@ -220,7 +228,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         service_observe_bluetooth_state_button.setOnClickListener {
-
+            when(bleServiceHandler.isObserveBluetoothRunning){
+                true-> bleServiceHandler.stopObserveBluetoothState()
+                false->bleServiceHandler.startObserveBluetoothState()
+            }
         }
 
         service_auto_connect_button.setOnClickListener {
