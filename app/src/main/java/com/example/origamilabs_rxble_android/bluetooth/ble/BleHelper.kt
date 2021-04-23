@@ -1,4 +1,4 @@
-package com.example.origamilabs_rxble_android
+package com.example.origamilabs_rxble_android.bluetooth.ble
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context

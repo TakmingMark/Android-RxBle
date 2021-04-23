@@ -1,4 +1,4 @@
-package com.example.origamilabs_rxble_android
+package com.example.origamilabs_rxble_android.bluetooth.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context

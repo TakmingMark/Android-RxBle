@@ -1,4 +1,4 @@
-package com.example.origamilabs_rxble_android
+package com.example.origamilabs_rxble_android.bluetooth.manager
 
 import java.util.*
 

@@ -24,7 +24,7 @@
         </activity>
 
         <service
-            android:name=".BleService"
+            android:name=".bluetooth.service.BleService"
             android:process=":BleService"
             android:exported="true"
             android:enabled="true" />

@@ -1,10 +1,11 @@
-package com.example.origamilabs_rxble_android
+package com.example.origamilabs_rxble_android.bluetooth.service
 
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.*
+import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManagerListener
 import timber.log.Timber
 import java.lang.Exception
 

@@ -8,6 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 import android.view.View.*
 import android.widget.Button
 import android.widget.Toast
+import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManager
+import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManagerListener
+import com.example.origamilabs_rxble_android.bluetooth.service.BleService
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.activity_main.*

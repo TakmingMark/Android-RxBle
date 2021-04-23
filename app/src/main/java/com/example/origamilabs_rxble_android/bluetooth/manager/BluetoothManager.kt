@@ -1,4 +1,4 @@
-package com.example.origamilabs_rxble_android
+package com.example.origamilabs_rxble_android.bluetooth.manager
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothDevice.ACTION_BOND_STATE_CHANGED
@@ -7,6 +7,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import com.example.origamilabs_rxble_android.bluetooth.ble.BleHelper
+import com.example.origamilabs_rxble_android.bluetooth.ble.BleListener
+import com.example.origamilabs_rxble_android.bluetooth.classic.BluetoothHelper
+import com.example.origamilabs_rxble_android.bluetooth.classic.BluetoothListener
 import timber.log.Timber
 import java.util.*
 

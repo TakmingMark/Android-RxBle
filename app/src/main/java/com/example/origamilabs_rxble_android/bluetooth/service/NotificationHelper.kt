@@ -1,4 +1,4 @@
-package com.example.origamilabs_rxble_android
+package com.example.origamilabs_rxble_android.bluetooth.service
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.example.origamilabs_rxble_android.R
 
 class NotificationHelper(private val context: Context) {
     private val NOTIFICATION_ID = 1002

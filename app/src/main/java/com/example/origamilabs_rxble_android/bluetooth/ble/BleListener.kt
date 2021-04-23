@@ -1,8 +1,8 @@
-package com.example.origamilabs_rxble_android
+package com.example.origamilabs_rxble_android.bluetooth.ble
 
 import java.util.*
 
-open class BleListener :BleHelper.IBleListener{
+open class BleListener : BleHelper.IBleListener {
     override fun onObserveBleState(state: String) {
     }
 
