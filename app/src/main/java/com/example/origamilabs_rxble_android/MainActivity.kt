@@ -311,7 +311,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onObserveBleStateError(error: String) {
-                    appendMessageView(error)
+                    appendMessageView("onObserveBleStateError:${error}")
                 }
 
                 override fun onScan(macAddress: String, deviceName: String, rssi: Int) {
@@ -319,38 +319,38 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onScanError(error: String) {
-                    appendMessageView(error)
+                    appendMessageView("onScanError:$error")
                 }
 
                 override fun onBleConnected(macAddress: String) {
-                    appendMessageView("connected $macAddress")
+                    appendMessageView("onBleConnected $macAddress")
                 }
 
                 override fun onConnectBleError(error: String) {
-                    appendMessageView(error)
+                    appendMessageView("onConnectBleError:$error")
                 }
 
                 override fun onDiscoverBleService(serviceUuid: UUID) {
-                    appendMessageView("serviceUuid $serviceUuid")
+                    appendMessageView("onDiscoverBleService,serviceUuid $serviceUuid")
                 }
 
                 override fun onDiscoverBleService(
                     gattServiceUuid: UUID,
                     characteristicUuids: List<UUID>
                 ) {
-                    appendMessageView("gattServiceUuid $gattServiceUuid,characteristicUuids:${characteristicUuids}")
+                    appendMessageView("onDiscoverBleService,gattServiceUuid $gattServiceUuid,characteristicUuids:${characteristicUuids}")
                 }
 
                 override fun onDiscoverBleServiceError(error: String) {
-                    appendMessageView(error)
+                    appendMessageView("onDiscoverBleServiceError:$error")
                 }
 
                 override fun onListenNotification(characteristicUuid: UUID, value: Int) {
-                    appendMessageView("Listen:$value")
+                    appendMessageView("onListenNotification:$value")
                 }
 
                 override fun onListenNotificationError(error: String) {
-                    appendMessageView(error)
+                    appendMessageView("onListenNotificationError:$error")
                 }
 
                 override fun onAutoConnectSuccess() {
@@ -358,7 +358,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onAutoConnectError(error: String) {
-                    appendMessageView(error)
+                    appendMessageView("onAutoConnectError$error")
                 }
             }
             bluetoothManager.bluetoothManagerListener = this.bluetoothManagerListener
