@@ -133,23 +133,25 @@
             app:layout_constraintStart_toEndOf="@id/listen_notification_text_view"
             app:layout_constraintTop_toTopOf="@id/listen_notification_text_view" />
 
+
+
         <TextView
-            android:id="@+id/refresh_text_view"
+            android:id="@+id/auto_connect_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Refresh BLE:"
+            android:text="Auto connect all of thing:"
             android:textSize="20sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/listen_notification_text_view" />
 
         <Button
-            android:id="@+id/refresh_button"
+            android:id="@+id/auto_connect_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="START"
-            app:layout_constraintBottom_toBottomOf="@id/refresh_text_view"
-            app:layout_constraintStart_toEndOf="@id/refresh_text_view"
-            app:layout_constraintTop_toTopOf="@id/refresh_text_view" />
+            app:layout_constraintBottom_toBottomOf="@id/auto_connect_text_view"
+            app:layout_constraintStart_toEndOf="@id/auto_connect_text_view"
+            app:layout_constraintTop_toTopOf="@id/auto_connect_text_view" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

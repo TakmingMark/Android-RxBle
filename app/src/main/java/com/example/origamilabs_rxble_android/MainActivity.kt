@@ -3,8 +3,8 @@ package com.example.origamilabs_rxble_android
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.os.*
 import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
 import android.view.View.*
 import android.widget.Button
 import android.widget.Toast
@@ -24,107 +24,35 @@ class MainActivity : AppCompatActivity() {
         RxPermissions(this)
     }
 
-    private val bluetoothHelper by lazy {
-        BluetoothHelper(this)
-    }
-
-    private val bleHelper: BleHelper by lazy {
-        BleHelper(this)
-    }
-
     private val bluetoothManager: BluetoothManager by lazy {
         BluetoothManager(this)
     }
 
     private val bleServiceHandler: BleServiceHandler by lazy {
-        BleServiceHandler(this, bleServiceConnectionListener)
+        BleServiceHandler(this, bleServiceConnectionListener, mainLooper)
     }
 
     private var grantPermissionsDisposable: Disposable? = null
 
-    private val bluetoothManagerListener = object : BluetoothManagerListener() {
-        override fun onObserveBleState(state: String) {
-            appendMessageView("observeBleState:$state")
-        }
-
-        override fun onObserveBleStateError(error: String) {
-            appendMessageView(error)
-        }
-
-        override fun onScan(macAddress: String, deviceName: String, rssi: Int) {
-            appendMessageView("Found $macAddress,$deviceName,$rssi")
-
-            if(mac_address_edit_text.text.toString()==macAddress){
-                bleServiceHandler.connectDevice(macAddress)
-                bleServiceHandler.stopScanDevice()
-            }
-        }
-
-        override fun onScanError(error: String) {
-            appendMessageView(error)
-        }
-
-        override fun onBleConnected(macAddress: String) {
-            appendMessageView("connected $macAddress")
-        }
-
-        override fun onConnectBleError(error: String) {
-            appendMessageView(error)
-        }
-
-        override fun onListenNotification(characteristicUuid: UUID, value: Int) {
-            appendMessageView("Listen:$value")
-        }
-
-        override fun onListenNotificationError(error: String) {
-            appendMessageView(error)
-        }
-    }
-
-    private val bleListener = object : BleListener() {
-        override fun onObserveBleState(state: String) {
-            appendMessageView("observeBleState:$state")
-        }
-
-        override fun onObserveBleStateError(error: String) {
-            appendMessageView(error)
-        }
-
-        override fun onScan(macAddress: String, deviceName: String, rssi: Int) {
-            appendMessageView("Found $macAddress,$deviceName,$rssi")
-
-        }
-
-        override fun onScanError(error: String) {
-            appendMessageView(error)
-        }
-
-        override fun onBleConnected(macAddress: String) {
-            appendMessageView("connected $macAddress")
-        }
-
-        override fun onConnectBleError(error: String) {
-            appendMessageView(error)
-        }
-
-        override fun onListenNotification(characteristicUuid: UUID, value: Int) {
-            appendMessageView("Listen:$value")
-        }
-
-        override fun onListenNotificationError(error: String) {
-            appendMessageView(error)
-        }
-    }
+    private var bluetoothManagerListener: BluetoothManagerListener? = null
 
     private val bleServiceConnectionListener = object :
         BleServiceHandler.BleServiceConnectionListener {
         override fun onConnected() {
-            bleServiceHandler.setListener(bluetoothManagerListener)
             bleServiceHandler.scanDevice()
         }
 
         override fun onDisconnected() {
             bleServiceHandler.stopScanDevice()
+        }
+
+        override fun onDiscoverDeviceMacAddress(macAddress: String) {
+            appendMessageView("Found $macAddress")
+
+            if (mac_address_edit_text.text.toString() == macAddress) {
+                bleServiceHandler.connectDevice(macAddress)
+                bleServiceHandler.stopScanDevice()
+            }
         }
     }
 
@@ -137,73 +65,116 @@ class MainActivity : AppCompatActivity() {
         }
 
         grantPermissions()
-        initListener()
+        initBluetoothManagerListener()
+        initBleViewListener()
+        initBluetoothViewListener()
+        initServiceViewListener()
+        initOtherViewListener()
     }
 
-    private fun initListener() {
-        bleHelper.bleListener = this.bleListener
-        bluetoothManager.bluetoothManagerListener = this.bluetoothManagerListener
-
+    private fun initBleViewListener() {
         observe_bluetooth_state_button.setOnClickListener {
-            bleHelper.enabledObserveBleState(!bleHelper.isObserveBleStateEnabled)
+            when (bluetoothManager.isObserveBleStateRunning()) {
+                true -> bluetoothManager.stopObserveBleState()
+                false -> bluetoothManager.startObserveBleState()
+            }
+
             changeEnabledButtonText(
-                bleHelper.isObserveBleStateEnabled,
+                bluetoothManager.isObserveBleStateRunning(),
                 observe_bluetooth_state_button
             )
         }
 
         scan_button.setOnClickListener {
-            bleHelper.enabledScan(!bleHelper.isScanEnabled)
-            changeEnabledButtonText(bleHelper.isScanEnabled, scan_button)
+            when (bluetoothManager.isScanDeviceRunning()) {
+                true -> bluetoothManager.stopScanDevice()
+                false -> bluetoothManager.startScanDevice()
+            }
+            changeEnabledButtonText(bluetoothManager.isScanDeviceRunning(), scan_button)
         }
 
         connect_button.setOnClickListener {
-            bleHelper.enabledConnectBle(
-                !bleHelper.isConnectBleEnabled,
-                bleHelper.getBluetoothDevice(mac_address_edit_text.text.toString())
-            )
-            changeEnabledButtonText(bleHelper.isConnectBleEnabled, connect_button)
+
+            when (bluetoothManager.isConnectDeviceRunning()) {
+                true -> bluetoothManager.stopConnectDevice()
+                false ->{
+                    val macAddress = mac_address_edit_text.text.toString()
+                    bluetoothManager.startConnectDevice(macAddress)
+                }
+            }
+            changeEnabledButtonText(bluetoothManager.isConnectDeviceRunning(), connect_button)
         }
 
         discover_service_button.setOnClickListener {
-            bleHelper.enabledDiscoverService(!bleHelper.isDiscoverServiceEnabled)
-            changeEnabledButtonText(bleHelper.isDiscoverServiceEnabled, discover_service_button)
+            when (bluetoothManager.isDiscoverServiceRunning()) {
+                true -> bluetoothManager.stopDiscoverService()
+                false -> bluetoothManager.startDiscoverService()
+            }
+            changeEnabledButtonText(
+                bluetoothManager.isDiscoverServiceRunning(),
+                discover_service_button
+            )
         }
 
         read_characteristic_button.setOnClickListener {
-            bleHelper.enabledReadBleCharacteristicValue(!bleHelper.isReadCharacteristicEnabled)
+            when (bluetoothManager.isReadCharacteristicValueRunning()) {
+                true -> bluetoothManager.stopReadCharacteristicValue()
+                false -> bluetoothManager.startReadCharacteristicValue()
+            }
+
             changeEnabledButtonText(
-                bleHelper.isReadCharacteristicEnabled,
+                bluetoothManager.isReadCharacteristicValueRunning(),
                 read_characteristic_button
             )
         }
 
-        bonded_button.setOnClickListener {
-            val bluetoothDevice =
-                bleHelper.getBleDevice(mac_address_edit_text.text.toString())?.bluetoothDevice
-            if (bluetoothDevice != null)
-                bluetoothHelper.bondDevice(bluetoothDevice)
-        }
-
-        connect_a2dp_button.setOnClickListener {
-            val bluetoothDevice =
-                bleHelper.getBleDevice(mac_address_edit_text.text.toString())?.bluetoothDevice
-            if (bluetoothDevice != null)
-                bluetoothHelper.connectA2dp(bluetoothDevice)
-        }
-        
-        check_bond_state_button.setOnClickListener { 
-            bluetoothManager.printDeviceBondState(mac_address_edit_text.text.toString())
-        }
-
         listen_notification_button.setOnClickListener {
-            bleHelper.enabledListenNotification(!bleHelper.isListenNotificationEnabled)
+            when (bluetoothManager.isListenNotificationRunning()) {
+                true -> bluetoothManager.stopListenNotification()
+                false -> bluetoothManager.startListenNotification()
+            }
+
             changeEnabledButtonText(
-                bleHelper.isListenNotificationEnabled,
+                bluetoothManager.isListenNotificationRunning(),
                 listen_notification_button
             )
         }
 
+        auto_connect_button.setOnClickListener {
+            when(bluetoothManager.isAutoConnectRunning()){
+                true->bluetoothManager.stopAutoConnect()
+                false->{val macAddress=mac_address_edit_text.text.toString()
+                    bluetoothManager.startAutoConnect(macAddress)
+                }
+            }
+
+            changeEnabledButtonText(
+                bluetoothManager.isAutoConnectRunning(),
+                auto_connect_button
+            )
+        }
+    }
+
+    private fun initBluetoothViewListener(){
+        bonded_button.setOnClickListener {
+            val macAddress = mac_address_edit_text.text.toString()
+            val device = bluetoothManager.getBluetoothDevice(macAddress)
+            bluetoothManager.bondDevice(device)
+        }
+
+        connect_a2dp_button.setOnClickListener {
+            val macAddress = mac_address_edit_text.text.toString()
+            val device = bluetoothManager.getBluetoothDevice(macAddress)
+            bluetoothManager.connectA2dp(device)
+        }
+
+        check_bond_state_button.setOnClickListener {
+            bluetoothManager.printDeviceBondState(mac_address_edit_text.text.toString())
+        }
+    }
+
+
+    private fun initServiceViewListener(){
         start_service_and_connect_button.setOnClickListener {
             if (mac_address_edit_text.text.toString().length == 17)
                 bindService()
@@ -211,18 +182,10 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Please enter mac address then retry", Toast.LENGTH_LONG)
                     .show()
         }
+    }
 
-        auto_connect_without_service_button.setOnClickListener {
-            bluetoothManager.connectDevice(mac_address_edit_text.text.toString(), true)
-        }
 
-        refresh_button.setOnClickListener {
-            bleHelper.enabledConnectBle(
-                !bleHelper.isConnectBleEnabled,
-                bleHelper.getBluetoothDevice(mac_address_edit_text.text.toString())
-            )
-        }
-
+    private fun initOtherViewListener(){
         crash_app_button.setOnClickListener {
             throw Exception("")
         }
@@ -282,7 +245,74 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-//        bluetoothManager.unregisterReceivers()
+        bluetoothManager.unregisterReceivers()
+    }
+
+    private fun initBluetoothManagerListener() {
+        if (bluetoothManagerListener == null) {
+            bluetoothManagerListener = object : BluetoothManagerListener() {
+                override fun onObserveBleState(state: String) {
+                    appendMessageView("observeBleState:$state")
+                }
+
+                override fun onObserveBleStateError(error: String) {
+                    appendMessageView(error)
+                }
+
+                override fun onScan(macAddress: String, deviceName: String, rssi: Int) {
+                    appendMessageView("Found $macAddress,$deviceName,$rssi")
+
+                    if (mac_address_edit_text.text.toString() == macAddress) {
+//                        bleServiceHandler.connectDevice(macAddress)
+//                        bleServiceHandler.stopScanDevice()
+                    }
+                }
+
+                override fun onScanError(error: String) {
+                    appendMessageView(error)
+                }
+
+                override fun onBleConnected(macAddress: String) {
+                    appendMessageView("connected $macAddress")
+                }
+
+                override fun onConnectBleError(error: String) {
+                    appendMessageView(error)
+                }
+
+                override fun onDiscoverBleService(serviceUuid: UUID) {
+                    appendMessageView("serviceUuid $serviceUuid")
+                }
+
+                override fun onDiscoverBleService(
+                    gattServiceUuid: UUID,
+                    characteristicUuids: List<UUID>
+                ) {
+                    appendMessageView("gattServiceUuid $gattServiceUuid,characteristicUuids:${characteristicUuids}")
+                }
+
+                override fun onDiscoverBleServiceError(error: String) {
+                    appendMessageView(error)
+                }
+
+                override fun onListenNotification(characteristicUuid: UUID, value: Int) {
+                    appendMessageView("Listen:$value")
+                }
+
+                override fun onListenNotificationError(error: String) {
+                    appendMessageView(error)
+                }
+
+                override fun onAutoConnectSuccess() {
+                    appendMessageView("onAutoConnectSuccess")
+                }
+
+                override fun onAutoConnectError(error: String) {
+                    appendMessageView(error)
+                }
+            }
+            bluetoothManager.bluetoothManagerListener = this.bluetoothManagerListener
+        }
     }
 
     private fun bindService() {
@@ -291,5 +321,9 @@ class MainActivity : AppCompatActivity() {
             bleServiceHandler.getServiceConnection(),
             Context.BIND_AUTO_CREATE
         )
+    }
+
+    private fun unbindService() {
+        unbindService(bleServiceHandler.getServiceConnection())
     }
 }

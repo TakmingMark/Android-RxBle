@@ -18,11 +18,6 @@ class BleHelper(context: Context) {
 
     private var device: BluetoothDevice? = null
 
-    //    private var macAddress = "6F:66:6C:6F:10:0F"
-//    private var macAddress = "6F:66:6C:6F:04:18"
-    private var serviceUuid: UUID = UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb")
-    private var characteristicUuid: UUID = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb")
-
     private val rxBleClient: RxBleClient by lazy {
         RxBleClient.create(context)
     }
@@ -49,15 +44,18 @@ class BleHelper(context: Context) {
     private var rxBleConnection: RxBleConnection? = null
 
     fun enabledObserveBleState(enabled: Boolean): Boolean {
-        if (isObserveBleStateEnabled != enabled) {
+        val success = if (isObserveBleStateEnabled != enabled) {
             if (enabled)
                 observeBleState()
             else
                 disposeObserveBleState()
+            true
+        } else {
+            false
         }
 
         isObserveBleStateEnabled = enabled
-        return isObserveBleStateEnabled
+        return success
     }
 
     private fun observeBleState() {
@@ -109,15 +107,18 @@ class BleHelper(context: Context) {
     }
 
     fun enabledScan(enabled: Boolean): Boolean {
-        if (isScanEnabled != enabled) {
+        var success: Boolean = if (isScanEnabled != enabled) {
             if (enabled)
                 scan()
             else
                 disposeScan()
+            true
+        } else {
+            false
         }
 
         isScanEnabled = enabled
-        return isScanEnabled
+        return success
     }
 
     private fun scan() {
@@ -163,18 +164,16 @@ class BleHelper(context: Context) {
     }
 
     fun enabledConnectBle(enabled: Boolean, device: BluetoothDevice?): Boolean {
-        if (device?.address?.isEmpty()!!)
-            return isConnectBleEnabled
+        if (!enabled) {
+            disposeConnectBle()
+        } else {
+            if (device?.address?.isEmpty()!!)
+                return isConnectBleEnabled
 
-        this.device = device
-
-        if (isConnectBleEnabled != enabled) {
-            if (enabled)
+            this.device = device
+            if (isConnectBleEnabled != enabled && enabled)
                 connectBle(device.address)
-            else
-                disposeConnectBle()
         }
-
         isConnectBleEnabled = enabled
         return isConnectBleEnabled
     }
@@ -235,14 +234,22 @@ class BleHelper(context: Context) {
         Timber.d("discoverService")
         rxBleConnection
             .discoverServices()
-            .flatMap { services ->
-                services.getService(serviceUuid)
-            }
+
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ service ->
-                if (service != null) {
-                    bleListener?.onDiscoverBleService(serviceUuid)
-                }
+            .subscribe({ services ->
+                services
+                    .bluetoothGattServices
+                    .forEach { bluetoothGattService ->
+                        val characteristicUuids = bluetoothGattService
+                            .characteristics
+                            .map {
+                                it.uuid
+                            }
+                        bleListener?.onDiscoverBleService(
+                            bluetoothGattService.uuid,
+                            characteristicUuids
+                        )
+                    }
             }, { throwable ->
                 Timber.d(throwable)
                 bleListener?.onDiscoverBleServiceError(throwable.toString())
@@ -263,13 +270,13 @@ class BleHelper(context: Context) {
         }
     }
 
-    fun enabledReadBleCharacteristicValue(enabled: Boolean): Boolean {
+    fun enabledReadBleCharacteristicValue(enabled: Boolean, characteristicUuid: UUID): Boolean {
         if (rxBleConnection == null)
             return isReadCharacteristicEnabled
 
         if (isReadCharacteristicEnabled != enabled) {
             if (enabled)
-                readBleCharacteristicValue(rxBleConnection!!)
+                readBleCharacteristicValue(rxBleConnection!!, characteristicUuid)
             else
                 disposeReadBleCharacteristicValue()
         }
@@ -278,7 +285,10 @@ class BleHelper(context: Context) {
         return isReadCharacteristicEnabled
     }
 
-    private fun readBleCharacteristicValue(rxBleConnection: RxBleConnection) {
+    private fun readBleCharacteristicValue(
+        rxBleConnection: RxBleConnection,
+        characteristicUuid: UUID
+    ) {
         Timber.d("readBleCharacteristicValue")
         rxBleConnection
             .readCharacteristic(characteristicUuid)
@@ -311,13 +321,13 @@ class BleHelper(context: Context) {
         }
     }
 
-    fun enabledListenNotification(enabled: Boolean): Boolean {
+    fun enabledListenNotification(enabled: Boolean, characteristicUuid: UUID): Boolean {
         if (rxBleConnection == null)
             return isListenNotificationEnabled
 
         if (isListenNotificationEnabled != enabled) {
             if (enabled)
-                listenNotification(rxBleConnection!!)
+                listenNotification(rxBleConnection!!, characteristicUuid)
             else
                 disposeListenNotification()
         }
@@ -326,7 +336,7 @@ class BleHelper(context: Context) {
         return isListenNotificationEnabled
     }
 
-    private fun listenNotification(rxBleConnection: RxBleConnection) {
+    private fun listenNotification(rxBleConnection: RxBleConnection, characteristicUuid: UUID) {
         Timber.d("listenNotification")
         rxBleConnection
             .setupNotification(characteristicUuid)
@@ -408,6 +418,8 @@ class BleHelper(context: Context) {
 
         fun onBleConnected(macAddress: String)
         fun onConnectBleError(error: String)
+
+        fun onDiscoverBleService(gattServiceUuid: UUID, characteristicUuids: List<UUID>)
 
         fun onDiscoverBleService(serviceUuid: UUID)
         fun onDiscoverBleServiceError(error: String)

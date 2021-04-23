@@ -39,6 +39,10 @@ open class BluetoothManagerListener : BluetoothManager.IBluetoothManagerListener
 
     }
 
+    override fun onDiscoverBleService(gattServiceUuid: UUID, characteristicUuids: List<UUID>) {
+
+    }
+
     override fun onDiscoverBleServiceError(error: String) {
 
     }
@@ -56,6 +60,14 @@ open class BluetoothManagerListener : BluetoothManager.IBluetoothManagerListener
     }
 
     override fun onListenNotificationError(error: String) {
+
+    }
+
+    override fun onAutoConnectSuccess() {
+
+    }
+
+    override fun onAutoConnectError(error: String) {
 
     }
 }

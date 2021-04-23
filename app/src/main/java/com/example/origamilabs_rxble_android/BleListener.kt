@@ -24,6 +24,10 @@ open class BleListener :BleHelper.IBleListener{
     override fun onDiscoverBleService(serviceUuid: UUID) {
     }
 
+    override fun onDiscoverBleService(gattServiceUuid: UUID, characteristicUuids: List<UUID>) {
+
+    }
+
     override fun onDiscoverBleServiceError(error: String) {
     }
 

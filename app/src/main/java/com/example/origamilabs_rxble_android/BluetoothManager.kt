@@ -2,6 +2,7 @@ package com.example.origamilabs_rxble_android
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothDevice.ACTION_BOND_STATE_CHANGED
+import android.bluetooth.BluetoothDevice.BOND_BONDED
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -11,6 +12,10 @@ import java.util.*
 
 
 class BluetoothManager(private val context: Context) {
+    private var gattServiceUuid: UUID = UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb")
+    private var characteristicUuid: UUID = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb")
+
+
     private val bluetoothHelper by lazy {
         BluetoothHelper(context)
     }
@@ -19,7 +24,7 @@ class BluetoothManager(private val context: Context) {
         BleHelper(context)
     }
 
-    private var macAddress = ""
+    private var isAutoConnectRunning = false
 
     private var device: BluetoothDevice? = null
 
@@ -81,7 +86,9 @@ class BluetoothManager(private val context: Context) {
 
         override fun onBleConnected(macAddress: String) {
             bluetoothManagerListener?.onBleConnected(macAddress)
-            bleHelper.enabledDiscoverService(true)
+
+            if (isAutoConnectRunning)
+                bleHelper.enabledDiscoverService(true)
         }
 
         override fun onConnectBleError(error: String) {
@@ -107,9 +114,20 @@ class BluetoothManager(private val context: Context) {
             }
         }
 
+        override fun onDiscoverBleService(gattServiceUuid: UUID, characteristicUuids: List<UUID>) {
+            bluetoothManagerListener?.onDiscoverBleService(gattServiceUuid, characteristicUuids)
+            val gattServiceExist = this@BluetoothManager.gattServiceUuid == gattServiceUuid
+            if (isAutoConnectRunning && gattServiceExist)
+                bleHelper.enabledListenNotification(
+                    !bleHelper.isListenNotificationEnabled,
+                    characteristicUuid
+                )
+        }
+
         override fun onDiscoverBleService(serviceUuid: UUID) {
             bluetoothManagerListener?.onDiscoverBleService(serviceUuid)
-            bleHelper.enabledListenNotification(!bleHelper.isListenNotificationEnabled)
+
+
         }
 
         override fun onDiscoverBleServiceError(error: String) {
@@ -138,17 +156,140 @@ class BluetoothManager(private val context: Context) {
         bluetoothHelper.bluetoothListener = bluetoothListener
     }
 
-    fun scanDevice() {
-        bleHelper.enabledScan(true)
+
+    fun isObserveBleStateRunning(): Boolean {
+        return bleHelper.isObserveBleStateEnabled
     }
 
-    fun stopScanDevice(){
-        bleHelper.enabledScan(false)
+    fun startObserveBleState(): Boolean {
+        return bleHelper.enabledObserveBleState(true)
     }
 
-    fun connectDevice(macAddress: String, auto: Boolean) {
+    fun stopObserveBleState(): Boolean {
+        return bleHelper.enabledObserveBleState(false)
+    }
+
+    fun isScanDeviceRunning(): Boolean {
+        return bleHelper.isScanEnabled
+    }
+
+    fun startScanDevice(): Boolean {
+        return bleHelper.enabledScan(true)
+    }
+
+    fun stopScanDevice(): Boolean {
+        return bleHelper.enabledScan(false)
+    }
+
+    fun isConnectDeviceRunning(): Boolean {
+        return bleHelper.isConnectBleEnabled
+    }
+
+    fun startConnectDevice(macAddress: String) {
+        val bluetoothDevice = bleHelper.getBluetoothDevice(macAddress)
+        bleHelper.enabledConnectBle(true, bluetoothDevice)
+    }
+
+    fun stopConnectDevice() {
+        bleHelper.enabledConnectBle(false, null)
+    }
+
+    fun isDiscoverServiceRunning(): Boolean {
+        return bleHelper.isDiscoverServiceEnabled
+    }
+
+    fun startDiscoverService() {
+        bleHelper.enabledDiscoverService(true)
+    }
+
+    fun stopDiscoverService() {
+        bleHelper.enabledDiscoverService(false)
+    }
+
+    fun isReadCharacteristicValueRunning(): Boolean {
+        return bleHelper.isReadCharacteristicEnabled
+    }
+
+    fun startReadCharacteristicValue() {
+        bleHelper.enabledReadBleCharacteristicValue(true,characteristicUuid)
+    }
+
+    fun stopReadCharacteristicValue() {
+        bleHelper.enabledReadBleCharacteristicValue(false,characteristicUuid)
+    }
+
+    fun isListenNotificationRunning(): Boolean {
+        return bleHelper.isListenNotificationEnabled
+    }
+
+    fun startListenNotification() {
+        bleHelper.enabledListenNotification(true, characteristicUuid)
+    }
+
+    fun stopListenNotification() {
+        bleHelper.enabledListenNotification(false, characteristicUuid)
+    }
+
+    fun isAutoConnectRunning(): Boolean {
+        return isAutoConnectRunning
+    }
+
+    fun startAutoConnect(macAddress: String) {
+        val device = bleHelper.getBluetoothDevice(macAddress)
+
+        when {
+            device == null -> {
+                bluetoothManagerListener?.onAutoConnectError(AutoConnectCode.DEVICE_NULL_ERROR.name)
+                return
+            }
+            device.bondState != BOND_BONDED -> {
+                bluetoothManagerListener?.onAutoConnectError(AutoConnectCode.BOND_ERROR.name)
+                return
+            }
+            !bluetoothHelper.isA2dpConnected() -> {
+                bluetoothManagerListener?.onAutoConnectError(AutoConnectCode.A2DP_CONNECT_ERROR.name)
+                return
+            }
+        }
+        startConnectDevice(macAddress)
+        isAutoConnectRunning=true
+        bluetoothManagerListener?.onAutoConnectError(AutoConnectCode.AUTO_CONNECT_SUCCESS.name)
+    }
+
+    fun stopAutoConnect(){
+        stopObserveBleState()
+        stopScanDevice()
+        stopListenNotification()
+        stopReadCharacteristicValue()
+        stopDiscoverService()
+        stopConnectDevice()
+        isAutoConnectRunning=false
+    }
+
+    fun getBluetoothDevice(macAddress: String): BluetoothDevice? {
+        return bleHelper.getBluetoothDevice(macAddress)
+    }
+
+    fun bondDevice(device: BluetoothDevice?) {
+        if (device == null)
+            return
+
+        bluetoothHelper.bondDevice(device)
+    }
+
+    fun connectA2dp(device: BluetoothDevice?) {
+        if (device == null)
+            return
+
+        bluetoothHelper.connectA2dp(device)
+    }
+
+
+    // For Service use
+    fun connectDevice(macAddress: String) {
         val bluetoothDevice = bleHelper.getBluetoothDevice(macAddress)
         device = bluetoothDevice
+
 
         if (device == null)
             return
@@ -156,7 +297,7 @@ class BluetoothManager(private val context: Context) {
         bluetoothHelper.checkA2dpConnectedTimer()
     }
 
-    fun printDeviceBondState(macAddress: String){
+    fun printDeviceBondState(macAddress: String) {
         val bluetoothDevice = bleHelper.getBluetoothDevice(macAddress)
         bluetoothHelper.printDeviceBondState(bluetoothDevice)
     }
@@ -206,6 +347,7 @@ class BluetoothManager(private val context: Context) {
         fun onConnectBleError(error: String)
 
         fun onDiscoverBleService(serviceUuid: UUID)
+        fun onDiscoverBleService(gattServiceUuid: UUID, characteristicUuids: List<UUID>)
         fun onDiscoverBleServiceError(error: String)
 
         fun onReadBleCharacteristicValue(value: String)
@@ -213,5 +355,15 @@ class BluetoothManager(private val context: Context) {
 
         fun onListenNotification(characteristicUuid: UUID, value: Int)
         fun onListenNotificationError(error: String)
+
+        fun onAutoConnectSuccess()
+        fun onAutoConnectError(error:String)
+    }
+
+    enum class AutoConnectCode(val code: Int) {
+        AUTO_CONNECT_SUCCESS(0),
+        DEVICE_NULL_ERROR(1),
+        BOND_ERROR(2),
+        A2DP_CONNECT_ERROR(3)
     }
 }
