@@ -8,11 +8,13 @@ import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManagerL
 import com.example.origamilabs_rxble_android.BuildConfig
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.BUNDLE_SERVICE_MESSAGE_KEY
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_CHECK_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_CONNECT_FAILURE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_CONNECT_SUCCESS
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_CONNECT
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_SCAN_SUCCESS
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_SUCCESS
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_SCAN_FAILURE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_SCAN
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_STOP_SCAN
@@ -112,6 +114,15 @@ class BleService : Service() {
         return messenger.binder
     }
 
+    private fun checkObserveBluetoothStateRunning() {
+        val isRunning = bluetoothManager.isObserveBleStateRunning()
+        sendMessageToServiceHandler(
+            MSG_SEND_VALUE,
+            INTENT_SERVICE_HANDLER_RESPONSE_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE,
+            isRunning
+        )
+    }
+
     private fun startScanDevice() {
         bluetoothManager.startScanDevice()
     }
@@ -156,6 +167,22 @@ class BleService : Service() {
         }
     }
 
+    private fun sendMessageToServiceHandler(msgNumber: Int, msgKey: String, externalValue: Boolean) {
+        clients.forEach { client ->
+            try {
+                val msg = Message.obtain(null, msgNumber)
+                val bundle = Bundle()
+                bundle.putString(BUNDLE_SERVICE_MESSAGE_KEY, msgKey)
+                bundle.putBoolean(BUNDLE_SERVICE_EXTERNAL_VALUE_KEY, externalValue)
+                msg.data = bundle
+                msg.replyTo = messenger
+                client.send(msg)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     inner class BleServiceMessageHandler(looper: Looper) : Handler(looper) {
         override fun handleMessage(msg: Message) {
             Timber.d("msg.what:${msg.what}")
@@ -172,6 +199,9 @@ class BleService : Service() {
                         val messageKey = bundle.getString(BUNDLE_SERVICE_MESSAGE_KEY)
                         Timber.d("messageKey:$messageKey")
                         when (messageKey) {
+                            INTENT_SERVICE_CHECK_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE -> {
+                                checkObserveBluetoothStateRunning()
+                            }
                             INTENT_SERVICE_START_SCAN -> {
                                 startScanDevice()
                             }

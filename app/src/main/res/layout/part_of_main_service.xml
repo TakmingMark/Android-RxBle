@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent">
+
     <TextView
         android:id="@+id/service_text_view"
         android:layout_width="wrap_content"
@@ -36,24 +37,42 @@
         app:layout_constraintTop_toTopOf="@id/bind_service_text_view" />
 
 
+    <TextView
+        android:id="@+id/service_observe_bluetooth_state_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Observe bluetooth state:"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/bind_service_text_view" />
 
-        <TextView
-        android:id="@+id/auto_connect_text_view"
+    <Button
+        android:id="@+id/service_observe_bluetooth_state_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enabled"
+        app:layout_constraintBottom_toBottomOf="@id/service_observe_bluetooth_state_text_view"
+        app:layout_constraintStart_toEndOf="@id/service_observe_bluetooth_state_text_view"
+        app:layout_constraintTop_toTopOf="@id/service_observe_bluetooth_state_text_view" />
+
+    <TextView
+        android:id="@+id/service_auto_connect_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="Auto connect:"
         android:textSize="20sp"
         app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/bind_service_text_view"/>
+        app:layout_constraintTop_toBottomOf="@id/service_observe_bluetooth_state_text_view" />
 
     <Button
         android:id="@+id/service_auto_connect_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="START"
-        app:layout_constraintBottom_toBottomOf="@id/auto_connect_text_view"
-        app:layout_constraintStart_toEndOf="@id/auto_connect_text_view"
-        app:layout_constraintTop_toTopOf="@id/auto_connect_text_view" />
+        app:layout_constraintBottom_toBottomOf="@id/service_auto_connect_text_view"
+        app:layout_constraintStart_toEndOf="@id/service_auto_connect_text_view"
+        app:layout_constraintTop_toTopOf="@id/service_auto_connect_text_view" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

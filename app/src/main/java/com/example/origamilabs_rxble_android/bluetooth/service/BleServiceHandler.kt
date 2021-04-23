@@ -25,10 +25,21 @@ class BleServiceHandler(
         const val BUNDLE_SERVICE_HANDLER_EXTERNAL_VALUE_KEY =
             "bundle_send_handler_external_value_key"
 
+        const val INTENT_SERVICE_CHECK_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE =
+            "intent_service_check_observe_bluetooth_state_running_state"
+        const val INTENT_SERVICE_START_OBSERVE_BLUETOOTH_STATE =
+            "intent_service_start_observe_bluetooth_state"
+        const val INTENT_SERVICE_STOP_OBSERVE_BLUETOOTH_STATE =
+            "intent_service_stop_observe_bluetooth_state"
         const val INTENT_SERVICE_START_SCAN = "intent_service_start_scan"
         const val INTENT_SERVICE_STOP_SCAN = "intent_service_stop_scan"
         const val INTENT_SERVICE_START_CONNECT = "intent_service_start_connect"
         const val INTENT_SERVICE_STOP_CONNECT = "intent_service_stop_connect"
+
+        const val INTENT_SERVICE_HANDLER_RESPONSE_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE =
+            "intent_service_handler_response_observe_bluetooth_state_running_state"
+        const val INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_SUCCESS =
+            "intent_service_handler_observe_bluetooth_state_success"
 
         const val INTENT_SERVICE_HANDLER_SCAN_SUCCESS = "intent_service_handler_scan_success"
         const val INTENT_SERVICE_HANDLER_SCAN_FAILURE = "intent_service_handler_scan_failure"
@@ -43,6 +54,8 @@ class BleServiceHandler(
     var isBound = false
         private set
 
+    var isObserveBluetoothRunning = false
+
     private val messenger = Messenger(BleServiceHandlerMessageHandler(looper))
 
     private var service: Messenger? = null
@@ -56,6 +69,7 @@ class BleServiceHandler(
             )
             context.startService(intent)
             sendMessageToService(MSG_REGISTER_CLIENT)
+            checkObserveBluetoothRunningState()
 
             isBound = true
             bleServiceConnectionListener.onConnected()
@@ -70,6 +84,27 @@ class BleServiceHandler(
 
     fun getServiceConnection(): ServiceConnection {
         return serviceConnection
+    }
+
+    fun checkObserveBluetoothRunningState() {
+        sendMessageToService(
+            MSG_SEND_VALUE,
+            INTENT_SERVICE_CHECK_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE
+        )
+    }
+
+    fun startObserveBluetoothState() {
+        sendMessageToService(
+            MSG_SEND_VALUE,
+            INTENT_SERVICE_START_OBSERVE_BLUETOOTH_STATE
+        )
+    }
+
+    fun stopObserveBluetoothState() {
+        sendMessageToService(
+            MSG_SEND_VALUE,
+            INTENT_SERVICE_STOP_OBSERVE_BLUETOOTH_STATE
+        )
     }
 
     fun startScanDevice() {
@@ -135,6 +170,12 @@ class BleServiceHandler(
                         val messageKey = bundle.getString(BUNDLE_SERVICE_MESSAGE_KEY)
                         Timber.d("messageKey:$messageKey")
                         when (messageKey) {
+                            INTENT_SERVICE_HANDLER_RESPONSE_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE -> {
+                                isObserveBluetoothRunning = bundle.getBoolean(
+                                    BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
+                                )
+                                bleServiceConnectionListener.onCheckObserveBluetoothStateRunning(isObserveBluetoothRunning)
+                            }
                             INTENT_SERVICE_HANDLER_SCAN_SUCCESS -> {
                                 val macAddress = bundle.getString(
                                     BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
@@ -147,7 +188,7 @@ class BleServiceHandler(
                                 ) ?: return
                                 bleServiceConnectionListener.onScanSuccess(error)
                             }
-                            INTENT_SERVICE_HANDLER_CONNECT_SUCCESS->{
+                            INTENT_SERVICE_HANDLER_CONNECT_SUCCESS -> {
                                 val macAddress = bundle.getString(
                                     BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
                                 ) ?: return
@@ -172,6 +213,8 @@ class BleServiceHandler(
     interface BleServiceConnectionListener {
         fun onConnected()
         fun onDisconnected()
+
+        fun onCheckObserveBluetoothStateRunning(isRunning:Boolean)
 
         fun onScanSuccess(macAddress: String)
         fun onScanFailure(error: String)

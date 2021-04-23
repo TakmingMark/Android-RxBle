@@ -61,6 +61,15 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
+        override fun onCheckObserveBluetoothStateRunning(isRunning: Boolean) {
+            appendMessageView("onCheckObserveBluetoothStateRunning:$isRunning")
+
+            changeEnabledButtonText(
+                isRunning,
+                service_observe_bluetooth_state_button
+            )
+        }
+
         override fun onScanSuccess(macAddress: String) {
             appendMessageView("onScanSuccess: $macAddress")
 
@@ -208,6 +217,10 @@ class MainActivity : AppCompatActivity() {
                 true -> unbindService()
                 false -> bindService()
             }
+        }
+
+        service_observe_bluetooth_state_button.setOnClickListener {
+
         }
 
         service_auto_connect_button.setOnClickListener {
