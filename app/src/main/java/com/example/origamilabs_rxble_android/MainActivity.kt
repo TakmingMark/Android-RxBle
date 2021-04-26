@@ -100,6 +100,15 @@ class MainActivity : AppCompatActivity() {
             appendMessageView("onScanFailure: $error")
         }
 
+        override fun onCheckConnectRunning(isRunning: Boolean) {
+            appendMessageView("onCheckConnectRunning:$isRunning")
+
+            changeEnabledButtonText(
+                isRunning,
+                service_connect_button
+            )
+        }
+
         override fun onConnectSuccess(macAddress: String) {
             appendMessageView("onConnectSuccess: $macAddress")
         }
@@ -250,8 +259,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        service_auto_connect_button.setOnClickListener {
-
+        service_connect_button.setOnClickListener {
+            when (bleServiceHandler.isConnectRunning) {
+                true -> bleServiceHandler.stopConnectDevice()
+                false -> {
+                    val macAddress = mac_address_edit_text.text.toString()
+                    bleServiceHandler.startConnectDevice(macAddress)
+                }
+            }
         }
     }
 

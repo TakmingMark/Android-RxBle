@@ -34,6 +34,7 @@ class BleServiceHandler(
         const val INTENT_SERVICE_CHECK_SCAN_RUNNING_STATE="intent_service_check_scan_running_state"
         const val INTENT_SERVICE_START_SCAN = "intent_service_start_scan"
         const val INTENT_SERVICE_STOP_SCAN = "intent_service_stop_scan"
+        const val INTENT_SERVICE_CHECK_CONNECT_RUNNING_STATE="intent_service_check_connect_running_state"
         const val INTENT_SERVICE_START_CONNECT = "intent_service_start_connect"
         const val INTENT_SERVICE_STOP_CONNECT = "intent_service_stop_connect"
 
@@ -47,6 +48,7 @@ class BleServiceHandler(
         const val INTENT_SERVICE_HANDLER_SCAN_SUCCESS = "intent_service_handler_scan_success"
         const val INTENT_SERVICE_HANDLER_SCAN_FAILURE = "intent_service_handler_scan_failure"
 
+        const val INTENT_SERVICE_HANDLER_RESPONSE_CONNECT_RUNNING_STATE="intent_service_handler_response_connect_running_state"
         const val INTENT_SERVICE_HANDLER_CONNECT_SUCCESS = "intent_service_handler_connect_success"
         const val INTENT_SERVICE_HANDLER_CONNECT_FAILURE = "intent_service_handler_connect_failure"
 
@@ -62,6 +64,8 @@ class BleServiceHandler(
         private set
     var isScanRunning = false
         private set
+    var isConnectRunning=false
+    private set
 
     private val messenger = Messenger(BleServiceHandlerMessageHandler(looper))
 
@@ -78,6 +82,7 @@ class BleServiceHandler(
             sendMessageToService(MSG_REGISTER_CLIENT)
             checkObserveBluetoothRunningState()
             checkScanRunningState()
+            checkConnectState()
 
             isBound = true
             bleServiceConnectionListener.onConnected()
@@ -128,6 +133,13 @@ class BleServiceHandler(
 
     fun stopScanDevice() {
         sendMessageToService(MSG_SEND_VALUE, INTENT_SERVICE_STOP_SCAN)
+    }
+
+    fun checkConnectState(){
+        sendMessageToService(
+            MSG_SEND_VALUE,
+            INTENT_SERVICE_CHECK_CONNECT_RUNNING_STATE
+        )
     }
 
     fun startConnectDevice(macAddress: String) {
@@ -223,6 +235,14 @@ class BleServiceHandler(
                                 ) ?: return
                                 bleServiceConnectionListener.onScanSuccess(error)
                             }
+                            INTENT_SERVICE_HANDLER_RESPONSE_CONNECT_RUNNING_STATE->{
+                                isConnectRunning = bundle.getBoolean(
+                                    BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
+                                )
+                                bleServiceConnectionListener.onCheckConnectRunning(
+                                    isConnectRunning
+                                )
+                            }
                             INTENT_SERVICE_HANDLER_CONNECT_SUCCESS -> {
                                 val macAddress = bundle.getString(
                                     BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
@@ -257,6 +277,7 @@ class BleServiceHandler(
         fun onScanSuccess(macAddress: String)
         fun onScanFailure(error: String)
 
+        fun onCheckConnectRunning(isRunning: Boolean)
         fun onConnectSuccess(macAddress: String)
         fun onConnectFailure(error: String)
     }
