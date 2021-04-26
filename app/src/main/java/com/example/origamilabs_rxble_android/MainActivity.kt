@@ -3,11 +3,10 @@ package com.example.origamilabs_rxble_android
 import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.os.*
-import androidx.appcompat.app.AppCompatActivity
-import android.view.View.*
+import android.os.Bundle
+import android.view.View.FOCUS_DOWN
 import android.widget.Button
-import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManager
 import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManagerListener
 import com.example.origamilabs_rxble_android.bluetooth.service.BleService
@@ -132,6 +131,22 @@ class MainActivity : AppCompatActivity() {
 
         override fun onListenNotificationFailure(error: String) {
             appendMessageView("onListenNotificationFailure: $error")
+        }
+
+        override fun onAutoConnectRunning(isRunning: Boolean) {
+            appendMessageView("onAutoConnectRunning: $isRunning")
+            changeEnabledButtonText(
+                isRunning,
+                service_auto_connect_button
+            )
+        }
+
+        override fun onAutoConnectSuccess() {
+            appendMessageView("onAutoConnectSuccess")
+        }
+
+        override fun onAutoConnectFailure(error: String) {
+            appendMessageView("onAutoConnectFailure:$error")
         }
     }
 
@@ -287,9 +302,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         service_listen_notification_button.setOnClickListener {
-            when(bleServiceHandler.isListenNotificationRunning){
-                true->bleServiceHandler.stopListenNotification()
-                false->bleServiceHandler.startListenNotification()
+            when (bleServiceHandler.isListenNotificationRunning) {
+                true -> bleServiceHandler.stopListenNotification()
+                false -> bleServiceHandler.startListenNotification()
+            }
+        }
+
+        service_auto_connect_button.setOnClickListener {
+            when (bleServiceHandler.isAutoConnectRunning) {
+                true -> bleServiceHandler.stopAutoConnect()
+                false -> {
+                    val macAddress = mac_address_edit_text.text.toString()
+                    bleServiceHandler.startAutoConnect(macAddress)
+                }
             }
         }
     }
@@ -350,12 +375,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        bluetoothManager.registerReceivers()
+//        bluetoothManager.registerReceivers()
     }
 
     override fun onPause() {
         super.onPause()
-        bluetoothManager.unregisterReceivers()
+//        bluetoothManager.unregisterReceivers()
     }
 
     private fun initBluetoothManagerListener() {

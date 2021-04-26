@@ -14,6 +14,10 @@ import java.util.concurrent.TimeUnit
 
 
 class BleHelper(context: Context) {
+    private companion object {
+        private const val AUTO_CLOSE_SCAN_TIME = 10L
+    }
+
     var bleListener: IBleListener? = null
 
     private var device: BluetoothDevice? = null
@@ -28,6 +32,7 @@ class BleHelper(context: Context) {
     var isScanEnabled = false
         private set
     private var scanSubscriptionDisposable: Disposable? = null
+    private var autoCloseScanSubscriptionDisposable: Disposable? = null
     var isConnectBleEnabled = false
         private set
     private var connectBleSubscriptionDisposable: Disposable? = null
@@ -108,9 +113,28 @@ class BleHelper(context: Context) {
 
     fun enabledScan(enabled: Boolean): Boolean {
         var success: Boolean = if (isScanEnabled != enabled) {
-            if (enabled)
-                scan()
-            else
+
+            if (autoCloseScanSubscriptionDisposable != null) {
+                autoCloseScanSubscriptionDisposable?.dispose()
+                autoCloseScanSubscriptionDisposable = null
+            }
+
+            if (enabled) {
+                Single
+                    .create<() -> Unit>
+                    {
+                        scan()
+                        it.onSuccess(::disposeScan)
+                    }
+                    .delay(AUTO_CLOSE_SCAN_TIME, TimeUnit.SECONDS)
+                    .subscribe { disposeScan ->
+                        disposeScan.invoke()
+                    }
+                    .apply {
+                        autoCloseScanSubscriptionDisposable = this
+                    }
+
+            } else
                 disposeScan()
             true
         } else {

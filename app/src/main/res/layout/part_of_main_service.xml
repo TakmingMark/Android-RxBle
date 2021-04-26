@@ -114,23 +114,23 @@
         app:layout_constraintTop_toTopOf="@id/service_listen_notification_text_view" />
 
 
-    <!--    <TextView-->
-<!--        android:id="@+id/service_auto_connect_text_view"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_marginTop="20dp"-->
-<!--        android:text="Auto connect:"-->
-<!--        android:textSize="20sp"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toBottomOf="@id/service_connect_text_view" />-->
+    <TextView
+        android:id="@+id/service_auto_connect_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Auto connect:"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/service_listen_notification_text_view" />
 
-<!--    <Button-->
-<!--        android:id="@+id/service_auto_connect_button"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="START"-->
-<!--        app:layout_constraintBottom_toBottomOf="@id/service_auto_connect_text_view"-->
-<!--        app:layout_constraintStart_toEndOf="@id/service_auto_connect_text_view"-->
-<!--        app:layout_constraintTop_toTopOf="@id/service_auto_connect_text_view" />-->
+    <Button
+        android:id="@+id/service_auto_connect_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ENABLED"
+        app:layout_constraintBottom_toBottomOf="@id/service_auto_connect_text_view"
+        app:layout_constraintStart_toEndOf="@id/service_auto_connect_text_view"
+        app:layout_constraintTop_toTopOf="@id/service_auto_connect_text_view" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

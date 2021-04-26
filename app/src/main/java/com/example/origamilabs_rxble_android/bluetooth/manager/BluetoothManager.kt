@@ -2,7 +2,6 @@ package com.example.origamilabs_rxble_android.bluetooth.manager
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothDevice.ACTION_BOND_STATE_CHANGED
-import android.bluetooth.BluetoothDevice.BOND_BONDED
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -11,9 +10,13 @@ import com.example.origamilabs_rxble_android.bluetooth.ble.BleHelper
 import com.example.origamilabs_rxble_android.bluetooth.ble.BleListener
 import com.example.origamilabs_rxble_android.bluetooth.classic.BluetoothHelper
 import com.example.origamilabs_rxble_android.bluetooth.classic.BluetoothListener
+import com.polidea.rxandroidble2.RxBleClient
 import com.polidea.rxandroidble2.RxBleDevice
+import io.reactivex.Observable
+import io.reactivex.disposables.Disposable
 import timber.log.Timber
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 class BluetoothManager(private val context: Context) {
@@ -33,6 +36,8 @@ class BluetoothManager(private val context: Context) {
 
     private var macAddress = ""
     private var device: BluetoothDevice? = null
+
+    private var autoConnectTimerDisposable: Disposable? = null
 
     var bluetoothManagerListener: IBluetoothManagerListener? = null
 
@@ -55,6 +60,8 @@ class BluetoothManager(private val context: Context) {
             when (intent.action) {
                 BluetoothDevice.ACTION_ACL_CONNECTED -> {
                     Timber.d("Bluetooth device ACL connected")
+                    if (isAutoConnectRunning)
+                        startAutoConnectTimer()
                 }
                 BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
                     Timber.d("Bluetooth device ACL disconnected")
@@ -76,6 +83,10 @@ class BluetoothManager(private val context: Context) {
     private val bleListener = object : BleListener() {
         override fun onObserveBleState(state: String) {
             bluetoothManagerListener?.onObserveBleState(state)
+
+            if (isAutoConnectRunning && state == RxBleClient.State.READY.toString()) {
+                startAutoConnectTimer()
+            }
         }
 
         override fun onObserveBleStateError(error: String) {
@@ -90,7 +101,7 @@ class BluetoothManager(private val context: Context) {
         ) {
             bluetoothManagerListener?.onScan(macAddress, deviceName, rssi)
 
-            if (isAutoConnectRunning) {
+            if (isAutoConnectRunning && this@BluetoothManager.macAddress == macAddress) {
                 device = rxBleDevice.bluetoothDevice
                 startConnectDevice(device!!)
                 stopScanDevice()
@@ -99,6 +110,9 @@ class BluetoothManager(private val context: Context) {
 
         override fun onScanError(error: String) {
             bluetoothManagerListener?.onScanError(error)
+            if (isAutoConnectRunning && error.contains("Bluetooth disabled")) {
+
+            }
         }
 
         override fun onBleConnected(macAddress: String) {
@@ -110,22 +124,29 @@ class BluetoothManager(private val context: Context) {
 
         override fun onConnectBleError(error: String) {
             bluetoothManagerListener?.onConnectBleError(error)
-            error.apply {
-                when {
-                    this.contains("status 133") -> {
-                        bleHelper.startConnectBleTimer()
-                    }
-                    this.contains("status 8") -> {
-                        bleHelper.startConnectBleTimer()
-                    }
-                    this.contains("status 40") -> {
-                        bleHelper.startConnectBleTimer()
-                    }
-                    this.contains("status 22") -> {
-                        bleHelper.startConnectBleTimer()
-                    }
-                    this.contains("status 19") -> {
-                        bleHelper.startConnectBleTimer()
+            bleHelper.enabledDiscoverService(false)
+
+            if (isAutoConnectRunning) {
+                error.apply {
+                    when {
+                        this.contains("status -1") -> {
+                            startAutoConnectTimer()
+                        }
+                        this.contains("status 8") -> {
+                            startAutoConnectTimer()
+                        }
+                        this.contains("status 19") -> {
+                            startAutoConnectTimer()
+                        }
+                        this.contains("status 133") -> {
+                            startAutoConnectTimer()
+                        }
+                        this.contains("status 22") -> {
+                            startAutoConnectTimer()
+                        }
+                        this.contains("status 40") -> {
+                            startAutoConnectTimer()
+                        }
                     }
                 }
             }
@@ -257,26 +278,9 @@ class BluetoothManager(private val context: Context) {
 
     fun startAutoConnect(macAddress: String) {
         this.macAddress = macAddress
+        startObserveBleState()
         startScanDevice()
         isAutoConnectRunning = true
-    }
-
-    fun startAutoConnect(device: BluetoothDevice) {
-        when {
-            device == null -> {
-                bluetoothManagerListener?.onAutoConnectError(AutoConnectErrorCode.DEVICE_NULL_ERROR.name)
-                return
-            }
-            device.bondState != BOND_BONDED -> {
-                bluetoothManagerListener?.onAutoConnectError(AutoConnectErrorCode.BOND_ERROR.name)
-                return
-            }
-            !bluetoothHelper.isA2dpConnected() -> {
-                bluetoothManagerListener?.onAutoConnectError(AutoConnectErrorCode.A2DP_CONNECT_Error_ERROR.name)
-                return
-            }
-        }
-        startConnectDevice(device)
     }
 
     fun stopAutoConnect() {
@@ -287,6 +291,33 @@ class BluetoothManager(private val context: Context) {
         stopDiscoverService()
         stopConnectDevice()
         isAutoConnectRunning = false
+    }
+
+    fun startAutoConnectTimer() {
+        Timber.d("startAutoConnectTimer")
+        if (autoConnectTimerDisposable != null)
+            return
+
+        Observable
+            .interval(2, 2, TimeUnit.SECONDS)
+            .subscribe {
+                Timber.d("startAutoConnectTimer:$it,bleHelper.isScanEnabled:${bleHelper.isScanEnabled}")
+                if (bleHelper.isConnectBleEnabled)
+                    disposeAutoConnectTimer()
+                else if (!bleHelper.isScanEnabled) {
+                    startScanDevice()
+                    disposeAutoConnectTimer()
+                }
+            }.apply {
+                autoConnectTimerDisposable = this
+            }
+    }
+
+    private fun disposeAutoConnectTimer() {
+        if (autoConnectTimerDisposable != null) {
+            autoConnectTimerDisposable?.dispose()
+            autoConnectTimerDisposable = null
+        }
     }
 
     fun getBluetoothDevice(macAddress: String): BluetoothDevice? {
@@ -386,6 +417,6 @@ class BluetoothManager(private val context: Context) {
     enum class AutoConnectErrorCode(val code: Int) {
         DEVICE_NULL_ERROR(1),
         BOND_ERROR(2),
-        A2DP_CONNECT_Error_ERROR(3)
+        A2DP_CONNECT_ERROR(3)
     }
 }

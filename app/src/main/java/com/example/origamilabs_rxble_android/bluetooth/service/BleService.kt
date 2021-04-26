@@ -8,6 +8,7 @@ import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManager
 import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManagerListener
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.BUNDLE_SERVICE_MESSAGE_KEY
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_CHECK_AUTO_CONNECT_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_CHECK_CONNECT_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_CHECK_LISTEN_NOTIFICATION_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_CHECK_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE
@@ -18,16 +19,19 @@ import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_SUCCESS
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_FAILURE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_SUCCESS
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_AUTO_CONNECT_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_CONNECT_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_LISTEN_NOTIFICATION_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_SCAN_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_SCAN_FAILURE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_SCAN_SUCCESS
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_AUTO_CONNECT
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_CONNECT
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_LISTEN_NOTIFICATION
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_OBSERVE_BLUETOOTH_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_SCAN
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_STOP_AUTO_CONNECT
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_STOP_CONNECT
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_STOP_LISTEN_NOTIFICATION
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_STOP_OBSERVE_BLUETOOTH_STATE
@@ -122,6 +126,7 @@ class BleService : Service() {
             notificationHelper.getNotificationId(),
             notificationHelper.getNotification("Connected")
         )
+        bluetoothManager.registerReceivers()
         bluetoothManager.bluetoothManagerListener = bluetoothManagerListener
 
         Observable.interval(1, TimeUnit.SECONDS).subscribe {
@@ -141,6 +146,7 @@ class BleService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Timber.d("onDestroy()")
+        bluetoothManager.unregisterReceivers()
     }
 
     override fun onBind(p0: Intent?): IBinder? {
@@ -224,6 +230,26 @@ class BleService : Service() {
     private fun stopListenNotification() {
         bluetoothManager.stopListenNotification()
         checkListenNotificationRunning()
+    }
+
+    private fun checkAutoConnectRunning() {
+        val isRunning = bluetoothManager.isAutoConnectRunning()
+        Timber.d("checkAutoConnectRunning:$isRunning")
+        sendMessageToServiceHandler(
+            MSG_SEND_VALUE,
+            INTENT_SERVICE_HANDLER_RESPONSE_AUTO_CONNECT_RUNNING_STATE,
+            isRunning
+        )
+    }
+
+    private fun startAutoConnect(macAddress: String) {
+        bluetoothManager.startAutoConnect(macAddress)
+        checkAutoConnectRunning()
+    }
+
+    private fun stopAutoConnect() {
+        bluetoothManager.stopAutoConnect()
+        checkAutoConnectRunning()
     }
 
     private fun connectDevice(macAddress: String?) {
@@ -336,6 +362,18 @@ class BleService : Service() {
                             }
                             INTENT_SERVICE_STOP_LISTEN_NOTIFICATION -> {
                                 stopListenNotification()
+                            }
+                            INTENT_SERVICE_CHECK_AUTO_CONNECT_RUNNING_STATE -> {
+                                checkAutoConnectRunning()
+                            }
+                            INTENT_SERVICE_START_AUTO_CONNECT -> {
+                                val macAddress = bundle.getString(
+                                    BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
+                                ) ?: return
+                                startAutoConnect(macAddress)
+                            }
+                            INTENT_SERVICE_STOP_AUTO_CONNECT -> {
+                                stopAutoConnect()
                             }
                         }
                     }
