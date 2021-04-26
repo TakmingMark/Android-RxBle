@@ -135,6 +135,12 @@ class BleServiceHandler(
         return serviceConnection
     }
 
+    fun clearService() {
+        service = null
+        isBound = false
+        bleServiceConnectionListener.onDisconnected()
+    }
+
     fun checkObserveBluetoothRunningState() {
         sendMessageToService(
             MSG_SEND_VALUE,

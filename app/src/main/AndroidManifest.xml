@@ -25,7 +25,12 @@
 
         <service
             android:name=".bluetooth.service.BleService"
-            android:process=":BleService"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":BleService" />
+
+        <service
+            android:name=".test.service.TestService"
             android:exported="true"
             android:enabled="true" />
     </application>

@@ -11,11 +11,14 @@ import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManager
 import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManagerListener
 import com.example.origamilabs_rxble_android.bluetooth.service.BleService
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler
+import com.example.origamilabs_rxble_android.test.service.TestService
+import com.example.origamilabs_rxble_android.test.service.TestServiceHandler
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.part_of_main_ble.*
 import kotlinx.android.synthetic.main.part_of_main_bluetooth.*
+import kotlinx.android.synthetic.main.part_of_main_others.*
 import kotlinx.android.synthetic.main.part_of_main_service.*
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -34,6 +37,10 @@ class MainActivity : AppCompatActivity() {
 
     private val bleServiceHandler: BleServiceHandler by lazy {
         BleServiceHandler(this, bleServiceConnectionListener, mainLooper)
+    }
+
+    private val testServiceHandler: TestServiceHandler by lazy {
+        TestServiceHandler(this)
     }
 
     private var grantPermissionsDisposable: Disposable? = null
@@ -163,7 +170,8 @@ class MainActivity : AppCompatActivity() {
         initBleViewListener()
         initBluetoothViewListener()
         initServiceViewListener()
-        initOtherViewListener()
+        initOthersViewListener()
+        initShowViewListener()
     }
 
     private fun initBleViewListener() {
@@ -272,8 +280,8 @@ class MainActivity : AppCompatActivity() {
     private fun initServiceViewListener() {
         bind_service_button.setOnClickListener {
             when (bleServiceHandler.isBound) {
-                true -> unbindService()
-                false -> bindService()
+                true -> unbindBleService()
+                false -> bindBleService()
             }
         }
 
@@ -320,11 +328,21 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun initOtherViewListener() {
+    private fun initOthersViewListener() {
         crash_app_button.setOnClickListener {
             throw Exception("")
         }
 
+        create_service_button.setOnClickListener {
+            bindTestService()
+        }
+
+        destroy_service_button.setOnClickListener {
+            unbindTestService()
+        }
+    }
+
+    private fun initShowViewListener() {
         scroll_2_view.viewTreeObserver.addOnGlobalLayoutListener {
             scroll_2_view.post {
                 scroll_2_view.fullScroll(FOCUS_DOWN)
@@ -445,7 +463,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun bindService() {
+    private fun bindBleService() {
         bindService(
             Intent(this, BleService::class.java),
             bleServiceHandler.getServiceConnection(),
@@ -453,7 +471,21 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun unbindService() {
+    private fun unbindBleService() {
         unbindService(bleServiceHandler.getServiceConnection())
+        bleServiceHandler.clearService()
+    }
+
+    private fun bindTestService() {
+        bindService(
+            Intent(this, TestService::class.java),
+            testServiceHandler.getServiceConnection(),
+            Context.BIND_AUTO_CREATE
+        )
+    }
+
+    private fun unbindTestService() {
+        unbindService(testServiceHandler.getServiceConnection())
+        testServiceHandler.clearService()
     }
 }
