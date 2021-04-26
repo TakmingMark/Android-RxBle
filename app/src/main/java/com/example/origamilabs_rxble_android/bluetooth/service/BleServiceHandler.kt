@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.*
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_LISTEN_NOTIFICATION_RUNNING_STATE
 import timber.log.Timber
 import java.lang.Exception
 
@@ -31,12 +32,23 @@ class BleServiceHandler(
             "intent_service_start_observe_bluetooth_state"
         const val INTENT_SERVICE_STOP_OBSERVE_BLUETOOTH_STATE =
             "intent_service_stop_observe_bluetooth_state"
-        const val INTENT_SERVICE_CHECK_SCAN_RUNNING_STATE="intent_service_check_scan_running_state"
+
+        const val INTENT_SERVICE_CHECK_SCAN_RUNNING_STATE =
+            "intent_service_check_scan_running_state"
         const val INTENT_SERVICE_START_SCAN = "intent_service_start_scan"
         const val INTENT_SERVICE_STOP_SCAN = "intent_service_stop_scan"
-        const val INTENT_SERVICE_CHECK_CONNECT_RUNNING_STATE="intent_service_check_connect_running_state"
+
+        const val INTENT_SERVICE_CHECK_CONNECT_RUNNING_STATE =
+            "intent_service_check_connect_running_state"
         const val INTENT_SERVICE_START_CONNECT = "intent_service_start_connect"
         const val INTENT_SERVICE_STOP_CONNECT = "intent_service_stop_connect"
+
+        const val INTENT_SERVICE_CHECK_LISTEN_NOTIFICATION_RUNNING_STATE =
+            "intent_service_check_listen_notfication_running_state"
+        const val INTENT_SERVICE_START_LISTEN_NOTIFICATION =
+            "intent_service_start_listen_notification"
+        const val INTENT_SERVICE_STOP_LISTEN_NOTIFICATION =
+            "intent_service_stop_listen_notification"
 
         const val INTENT_SERVICE_HANDLER_RESPONSE_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE =
             "intent_service_handler_response_observe_bluetooth_state_running_state"
@@ -44,16 +56,23 @@ class BleServiceHandler(
             "intent_service_handler_observe_bluetooth_state_success"
         const val INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_FAILURE =
             "intent_service_handler_observe_bluetooth_state_failure"
-        const val INTENT_SERVICE_HANDLER_RESPONSE_SCAN_RUNNING_STATE="intent_service_handler_response_scan_running_state"
+
+        const val INTENT_SERVICE_HANDLER_RESPONSE_SCAN_RUNNING_STATE =
+            "intent_service_handler_response_scan_running_state"
         const val INTENT_SERVICE_HANDLER_SCAN_SUCCESS = "intent_service_handler_scan_success"
         const val INTENT_SERVICE_HANDLER_SCAN_FAILURE = "intent_service_handler_scan_failure"
 
-        const val INTENT_SERVICE_HANDLER_RESPONSE_CONNECT_RUNNING_STATE="intent_service_handler_response_connect_running_state"
+        const val INTENT_SERVICE_HANDLER_RESPONSE_CONNECT_RUNNING_STATE =
+            "intent_service_handler_response_connect_running_state"
         const val INTENT_SERVICE_HANDLER_CONNECT_SUCCESS = "intent_service_handler_connect_success"
         const val INTENT_SERVICE_HANDLER_CONNECT_FAILURE = "intent_service_handler_connect_failure"
 
+        const val INTENT_SERVICE_HANDLER_RESPONSE_LISTEN_NOTIFICATION_RUNNING_STATE =
+            "intent_service_handler_response_listen_notification_running_state"
         const val INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_SUCCESS =
             "intent_service_handler_listen_notification"
+        const val INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_FAILURE =
+            "intent_service_handler_listen_notification_failure"
 
     }
 
@@ -64,8 +83,10 @@ class BleServiceHandler(
         private set
     var isScanRunning = false
         private set
-    var isConnectRunning=false
-    private set
+    var isConnectRunning = false
+        private set
+    var isListenNotificationRunning = false
+        private set
 
     private val messenger = Messenger(BleServiceHandlerMessageHandler(looper))
 
@@ -83,6 +104,7 @@ class BleServiceHandler(
             checkObserveBluetoothRunningState()
             checkScanRunningState()
             checkConnectState()
+            checkListenNotificationState()
 
             isBound = true
             bleServiceConnectionListener.onConnected()
@@ -120,7 +142,7 @@ class BleServiceHandler(
         )
     }
 
-    fun checkScanRunningState(){
+    fun checkScanRunningState() {
         sendMessageToService(
             MSG_SEND_VALUE,
             INTENT_SERVICE_CHECK_SCAN_RUNNING_STATE
@@ -135,7 +157,7 @@ class BleServiceHandler(
         sendMessageToService(MSG_SEND_VALUE, INTENT_SERVICE_STOP_SCAN)
     }
 
-    fun checkConnectState(){
+    fun checkConnectState() {
         sendMessageToService(
             MSG_SEND_VALUE,
             INTENT_SERVICE_CHECK_CONNECT_RUNNING_STATE
@@ -148,6 +170,18 @@ class BleServiceHandler(
 
     fun stopConnectDevice() {
         sendMessageToService(MSG_SEND_VALUE, INTENT_SERVICE_STOP_CONNECT)
+    }
+
+    fun checkListenNotificationState() {
+        sendMessageToService(MSG_SEND_VALUE, INTENT_SERVICE_CHECK_LISTEN_NOTIFICATION_RUNNING_STATE)
+    }
+
+    fun startListenNotification() {
+        sendMessageToService(MSG_SEND_VALUE, INTENT_SERVICE_START_LISTEN_NOTIFICATION)
+    }
+
+    fun stopListenNotification() {
+        sendMessageToService(MSG_SEND_VALUE, INTENT_SERVICE_STOP_LISTEN_NOTIFICATION)
     }
 
     private fun sendMessageToService(msgNumber: Int) {
@@ -215,7 +249,7 @@ class BleServiceHandler(
                                     bundle.getString(BUNDLE_SERVICE_EXTERNAL_VALUE_KEY) ?: ""
                                 bleServiceConnectionListener.onObserveBluetoothStateFailure(error)
                             }
-                            INTENT_SERVICE_HANDLER_RESPONSE_SCAN_RUNNING_STATE->{
+                            INTENT_SERVICE_HANDLER_RESPONSE_SCAN_RUNNING_STATE -> {
                                 isScanRunning = bundle.getBoolean(
                                     BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
                                 )
@@ -235,7 +269,7 @@ class BleServiceHandler(
                                 ) ?: return
                                 bleServiceConnectionListener.onScanSuccess(error)
                             }
-                            INTENT_SERVICE_HANDLER_RESPONSE_CONNECT_RUNNING_STATE->{
+                            INTENT_SERVICE_HANDLER_RESPONSE_CONNECT_RUNNING_STATE -> {
                                 isConnectRunning = bundle.getBoolean(
                                     BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
                                 )
@@ -254,6 +288,26 @@ class BleServiceHandler(
                                     BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
                                 ) ?: return
                                 bleServiceConnectionListener.onConnectFailure(error)
+                            }
+                            INTENT_SERVICE_HANDLER_RESPONSE_LISTEN_NOTIFICATION_RUNNING_STATE -> {
+                                isListenNotificationRunning = bundle.getBoolean(
+                                    BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
+                                )
+                                bleServiceConnectionListener.onCheckListenNotificationRunning(
+                                    isListenNotificationRunning
+                                )
+                            }
+                            INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_SUCCESS -> {
+                                val command = bundle.getString(
+                                    BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
+                                ) ?: return
+                                bleServiceConnectionListener.onListenNotificationSuccess(command)
+                            }
+                            INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_FAILURE->{
+                                val error = bundle.getString(
+                                    BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
+                                ) ?: return
+                                bleServiceConnectionListener.onListenNotificationFailure(error)
                             }
                         }
                     }
@@ -280,5 +334,9 @@ class BleServiceHandler(
         fun onCheckConnectRunning(isRunning: Boolean)
         fun onConnectSuccess(macAddress: String)
         fun onConnectFailure(error: String)
+
+        fun onCheckListenNotificationRunning(isRunning: Boolean)
+        fun onListenNotificationSuccess(command: String)
+        fun onListenNotificationFailure(error: String)
     }
 }

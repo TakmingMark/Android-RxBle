@@ -94,7 +94,27 @@
         app:layout_constraintStart_toEndOf="@id/service_connect_text_view"
         app:layout_constraintTop_toTopOf="@id/service_connect_text_view" />
 
-<!--    <TextView-->
+    <TextView
+        android:id="@+id/service_listen_notification_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Listen notification:"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/service_connect_text_view" />
+
+    <Button
+        android:id="@+id/service_listen_notification_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enabled"
+        app:layout_constraintBottom_toBottomOf="@id/service_listen_notification_text_view"
+        app:layout_constraintStart_toEndOf="@id/service_listen_notification_text_view"
+        app:layout_constraintTop_toTopOf="@id/service_listen_notification_text_view" />
+
+
+    <!--    <TextView-->
 <!--        android:id="@+id/service_auto_connect_text_view"-->
 <!--        android:layout_width="wrap_content"-->
 <!--        android:layout_height="wrap_content"-->

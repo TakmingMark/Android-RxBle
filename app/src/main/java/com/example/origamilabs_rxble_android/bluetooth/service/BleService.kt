@@ -3,28 +3,33 @@ package com.example.origamilabs_rxble_android.bluetooth.service
 import android.app.Service
 import android.content.Intent
 import android.os.*
+import com.example.origamilabs_rxble_android.BuildConfig
 import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManager
 import com.example.origamilabs_rxble_android.bluetooth.manager.BluetoothManagerListener
-import com.example.origamilabs_rxble_android.BuildConfig
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.BUNDLE_SERVICE_EXTERNAL_VALUE_KEY
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.BUNDLE_SERVICE_MESSAGE_KEY
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_CHECK_CONNECT_RUNNING_STATE
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_CHECK_LISTEN_NOTIFICATION_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_CHECK_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_CHECK_SCAN_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_CONNECT_FAILURE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_CONNECT_SUCCESS
-import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_CONNECT
-import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_SCAN_SUCCESS
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_FAILURE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_SUCCESS
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_FAILURE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_OBSERVE_BLUETOOTH_STATE_SUCCESS
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_CONNECT_RUNNING_STATE
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_LISTEN_NOTIFICATION_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_OBSERVE_BLUETOOTH_STATE_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_RESPONSE_SCAN_RUNNING_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_SCAN_FAILURE
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_HANDLER_SCAN_SUCCESS
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_CONNECT
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_LISTEN_NOTIFICATION
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_OBSERVE_BLUETOOTH_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_START_SCAN
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_STOP_CONNECT
+import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_STOP_LISTEN_NOTIFICATION
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_STOP_OBSERVE_BLUETOOTH_STATE
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.INTENT_SERVICE_STOP_SCAN
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.MSG_REGISTER_CLIENT
@@ -32,7 +37,6 @@ import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler
 import com.example.origamilabs_rxble_android.bluetooth.service.BleServiceHandler.Companion.MSG_UNREGISTER_CLIENT
 import io.reactivex.Observable
 import timber.log.Timber
-import java.lang.Exception
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
@@ -93,13 +97,18 @@ class BleService : Service() {
         }
 
         override fun onListenNotification(characteristicUuid: UUID, value: Int) {
-            clients.forEach { client ->
-                val message = Message.obtain(null, MSG_SEND_VALUE)
-                val bundle = Bundle()
-                bundle.putInt(INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_SUCCESS, value)
-                message.data = bundle
-                client.send(message)
-            }
+            sendMessageToServiceHandler(
+                MSG_SEND_VALUE,
+                INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_SUCCESS, value.toString()
+            )
+        }
+
+        override fun onListenNotificationError(error: String) {
+            sendMessageToServiceHandler(
+                MSG_SEND_VALUE,
+                INTENT_SERVICE_HANDLER_LISTEN_NOTIFICATION_FAILURE,
+                error
+            )
         }
     }
 
@@ -195,6 +204,26 @@ class BleService : Service() {
     private fun stopConnectDevice() {
         bluetoothManager.stopConnectDevice()
         checkConnectRunning()
+    }
+
+    private fun checkListenNotificationRunning() {
+        val isRunning = bluetoothManager.isListenNotificationRunning()
+        Timber.d("checkListenNotificationRunning:$isRunning")
+        sendMessageToServiceHandler(
+            MSG_SEND_VALUE,
+            INTENT_SERVICE_HANDLER_RESPONSE_LISTEN_NOTIFICATION_RUNNING_STATE,
+            isRunning
+        )
+    }
+
+    private fun startListenNotification() {
+        bluetoothManager.startListenNotification()
+        checkListenNotificationRunning()
+    }
+
+    private fun stopListenNotification() {
+        bluetoothManager.stopListenNotification()
+        checkListenNotificationRunning()
     }
 
     private fun connectDevice(macAddress: String?) {
@@ -299,7 +328,15 @@ class BleService : Service() {
                             INTENT_SERVICE_STOP_CONNECT -> {
                                 stopConnectDevice()
                             }
-
+                            INTENT_SERVICE_CHECK_LISTEN_NOTIFICATION_RUNNING_STATE -> {
+                                checkListenNotificationRunning()
+                            }
+                            INTENT_SERVICE_START_LISTEN_NOTIFICATION -> {
+                                startListenNotification()
+                            }
+                            INTENT_SERVICE_STOP_LISTEN_NOTIFICATION -> {
+                                stopListenNotification()
+                            }
                         }
                     }
                 }

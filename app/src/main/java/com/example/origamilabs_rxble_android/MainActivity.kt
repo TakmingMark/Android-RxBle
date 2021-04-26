@@ -116,6 +116,23 @@ class MainActivity : AppCompatActivity() {
         override fun onConnectFailure(error: String) {
             appendMessageView("onConnectFailure: $error")
         }
+
+        override fun onCheckListenNotificationRunning(isRunning: Boolean) {
+            appendMessageView("onCheckListenNotificationRunning:$isRunning")
+
+            changeEnabledButtonText(
+                isRunning,
+                service_listen_notification_button
+            )
+        }
+
+        override fun onListenNotificationSuccess(command: String) {
+            appendMessageView("onListenNotificationSuccess: $command")
+        }
+
+        override fun onListenNotificationFailure(error: String) {
+            appendMessageView("onListenNotificationFailure: $error")
+        }
     }
 
 
@@ -266,6 +283,13 @@ class MainActivity : AppCompatActivity() {
                     val macAddress = mac_address_edit_text.text.toString()
                     bleServiceHandler.startConnectDevice(macAddress)
                 }
+            }
+        }
+
+        service_listen_notification_button.setOnClickListener {
+            when(bleServiceHandler.isListenNotificationRunning){
+                true->bleServiceHandler.stopListenNotification()
+                false->bleServiceHandler.startListenNotification()
             }
         }
     }
