@@ -126,6 +126,7 @@ class BleService : Service() {
             notificationHelper.getNotificationId(),
             notificationHelper.getNotification("Connected")
         )
+
         bluetoothManager.registerReceivers()
         bluetoothManager.bluetoothManagerListener = bluetoothManagerListener
 
@@ -136,10 +137,6 @@ class BleService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Timber.d("onStartCommand()")
-        startForeground(
-            notificationHelper.getNotificationId(),
-            notificationHelper.getNotification("Connected")
-        )
         return START_STICKY
     }
 

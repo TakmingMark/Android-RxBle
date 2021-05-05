@@ -49,6 +49,24 @@ class MainActivity : AppCompatActivity() {
 
     private val bleServiceConnectionListener = object :
         BleServiceHandler.BleServiceConnectionListener {
+        override fun onStarted() {
+            appendMessageView("Ble Service started")
+
+            changeEnabledButtonText(
+                bleServiceHandler.isStart,
+                start_service_button
+            )
+        }
+
+        override fun onStopped() {
+            appendMessageView("Ble Service stopped")
+
+            changeEnabledButtonText(
+                bleServiceHandler.isStart,
+                start_service_button
+            )
+        }
+
         override fun onConnected() {
             appendMessageView("Ble Service connected")
 
@@ -278,6 +296,13 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun initServiceViewListener() {
+        start_service_button.setOnClickListener {
+            when (bleServiceHandler.isStart) {
+                true -> bleServiceHandler.stopService()
+                false -> bleServiceHandler.startService()
+            }
+        }
+
         bind_service_button.setOnClickListener {
             when (bleServiceHandler.isBound) {
                 true -> unbindBleService()

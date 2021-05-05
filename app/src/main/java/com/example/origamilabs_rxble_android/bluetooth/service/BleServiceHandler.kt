@@ -86,6 +86,9 @@ class BleServiceHandler(
 
     }
 
+    var isStart = false
+        private set
+
     var isBound = false
         private set
 
@@ -108,11 +111,7 @@ class BleServiceHandler(
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(p0: ComponentName?, iBinder: IBinder?) {
             service = Messenger(iBinder)
-            var intent = Intent(
-                context,
-                BleService::class.java
-            )
-            context.startService(intent)
+            startService()
             sendMessageToService(MSG_REGISTER_CLIENT)
             checkObserveBluetoothRunningState()
             checkScanRunningState()
@@ -135,12 +134,30 @@ class BleServiceHandler(
         return serviceConnection
     }
 
+    fun startService() {
+        var intent = Intent(
+            context,
+            BleService::class.java
+        )
+        context.startService(intent)
+        isStart = true
+        bleServiceConnectionListener.onStarted()
+    }
+
+    fun stopService() {
+        val intent = Intent(context, BleService::class.java)
+        context.stopService(intent)
+        isStart = false
+        bleServiceConnectionListener.onStopped()
+    }
+
     fun clearService() {
         sendMessageToService(MSG_UNREGISTER_CLIENT)
         service = null
         isBound = false
         bleServiceConnectionListener.onDisconnected()
     }
+
 
     fun checkObserveBluetoothRunningState() {
         sendMessageToService(
@@ -370,6 +387,10 @@ class BleServiceHandler(
     }
 
     interface BleServiceConnectionListener {
+        fun onStarted()
+        fun onStopped()
+
+
         fun onConnected()
         fun onDisconnected()
 
