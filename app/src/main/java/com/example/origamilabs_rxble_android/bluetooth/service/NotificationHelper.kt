@@ -42,4 +42,8 @@ class NotificationHelper(private val context: Context) {
     fun getNotificationId(): Int {
         return NOTIFICATION_ID
     }
+
+    fun getChannelId(): String {
+        return CHANNEL_ID
+    }
 }

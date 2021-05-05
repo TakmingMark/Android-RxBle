@@ -1,5 +1,6 @@
 package com.example.origamilabs_rxble_android.bluetooth.service
 
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.os.*
@@ -122,17 +123,32 @@ class BleService : Service() {
             Timber.plant(Timber.DebugTree())
         }
         Timber.d("onCreate()")
-        startForeground(
-            notificationHelper.getNotificationId(),
-            notificationHelper.getNotification("Connected")
-        )
-
+        startForeground()
         bluetoothManager.registerReceivers()
         bluetoothManager.bluetoothManagerListener = bluetoothManagerListener
 
         Observable.interval(1, TimeUnit.SECONDS).subscribe {
             Timber.d("it:$it")
         }
+    }
+
+    private fun startForeground() {
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        var notificationContentText: String? = ""
+        notificationManager
+            .activeNotifications
+            .forEach { statusBarNotification ->
+                if (statusBarNotification.id == notificationHelper.getNotificationId()) {
+                    notificationContentText =
+                        statusBarNotification.notification.extras.getString("android.text")
+                }
+            }
+
+        startForeground(
+            notificationHelper.getNotificationId(),
+            notificationHelper.getNotification(notificationContentText ?: "Disconnected")
+        )
+
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
