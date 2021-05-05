@@ -143,15 +143,20 @@ class BleService : Service() {
         return START_STICKY
     }
 
+    override fun onBind(p0: Intent?): IBinder? {
+        Timber.d("onBind()")
+        return messenger.binder
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        Timber.d("onUnbind()")
+        return super.onUnbind(intent)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         Timber.d("onDestroy()")
         bluetoothManager.unregisterReceivers()
-    }
-
-    override fun onBind(p0: Intent?): IBinder? {
-        Timber.d("onBind()")
-        return messenger.binder
     }
 
     private fun checkObserveBluetoothStateRunning() {
@@ -282,6 +287,8 @@ class BleService : Service() {
                 msg.data = bundle
                 msg.replyTo = messenger
                 client.send(msg)
+            } catch (e: DeadObjectException) {
+                clients.remove(client)
             } catch (e: Exception) {
                 e.printStackTrace()
             }

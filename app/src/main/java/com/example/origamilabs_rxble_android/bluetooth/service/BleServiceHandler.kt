@@ -136,6 +136,7 @@ class BleServiceHandler(
     }
 
     fun clearService() {
+        sendMessageToService(MSG_UNREGISTER_CLIENT)
         service = null
         isBound = false
         bleServiceConnectionListener.onDisconnected()
