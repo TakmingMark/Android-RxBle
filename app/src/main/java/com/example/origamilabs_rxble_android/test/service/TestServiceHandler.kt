@@ -32,6 +32,10 @@ class TestServiceHandler(private val context: Context) {
         service = null
     }
 
+    fun updateNotification() {
+        service?.updateNotification()
+    }
+
     fun getServiceConnection(): ServiceConnection {
         return serviceConnection
     }

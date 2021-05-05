@@ -340,6 +340,9 @@ class MainActivity : AppCompatActivity() {
         destroy_service_button.setOnClickListener {
             unbindTestService()
         }
+        update_service_button.setOnClickListener {
+            updateTestService()
+        }
     }
 
     private fun initShowViewListener() {
@@ -487,5 +490,9 @@ class MainActivity : AppCompatActivity() {
     private fun unbindTestService() {
         unbindService(testServiceHandler.getServiceConnection())
         testServiceHandler.clearService()
+    }
+
+    private fun updateTestService() {
+        testServiceHandler.updateNotification()
     }
 }
